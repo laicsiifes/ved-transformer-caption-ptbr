@@ -1,0 +1,109 @@
+##########################################################
+################### 1. GENERAL CONFIGS ###################
+##########################################################
+
+config:
+  # model architecture
+  # use the abbreviations of the 4th section of this file
+  encoder: "beit-base-224"
+  decoder: "distilbert-base"
+
+  # dataset for training and evaluation
+  dataset: "flickr30k_pt"
+  # dataset: "pracegover_63k"
+
+  # for sentence generation config
+  max_length: 25 # max length of generated sentence | 70 for pracegover-63k | 25 for flickr30k-pt
+  batch_size: 16 # batch size for training and sentence generation | 16 for small models | 8 for bigger models
+
+  # flag to eval.py, if True it evaluate using the model
+  # else it evaluate using the predictions previously saved after training
+  evaluate_from_model: True
+
+  # flag to turn off the computer after the training
+  turn_off_computer: False
+
+
+##########################################################
+################# 2. GENERATION CONFIGS ##################
+##########################################################
+
+generate_args:
+  # for model generate function 
+  num_beams: 5 # Default 5
+  no_repeat_ngram_size: 0 # Default 0
+  early_stopping: False # Default False
+
+
+##########################################################
+################## 3. TRAINING CONFIGS ###################
+##########################################################
+
+training_args:
+  predict_with_generate: True
+  num_train_epochs: 20 # Use 20 for the experiments
+  eval_steps: 200
+  logging_steps: 200
+  per_device_train_batch_size: 16
+  per_device_eval_batch_size: 16
+  learning_rate: 5.0e-5
+  weight_decay: 0.01
+  save_total_limit: 1
+  logging_strategy: "epoch"
+  evaluation_strategy: "epoch"
+  save_strategy: "epoch"
+  load_best_model_at_end: True
+  metric_for_best_model: "rougeL"
+  greater_is_better: True
+  push_to_hub: False
+  fp16: True
+
+callbacks:
+  early_stopping:
+    patience: 20 # Default 1
+    threshold: 0.0 # Default 0.0
+
+
+##########################################################
+########### 4. AVAILABLE ENCODERS AND DECODERS ###########
+##########################################################
+
+encoder:
+  # Vision Tranformers
+  vit-base-224: "google/vit-base-patch16-224"
+  vit-base-224-21k: "google/vit-base-patch16-224-in21k"
+  vit-base-384: "google/vit-base-patch16-384"
+  vit-large-384: "google/vit-large-patch16-384"
+  vit-huge-224-21k: "google/vit-huge-patch14-224-in21k" # SOTA among ViT's
+
+  # SWin Transformers
+  swin-base-224: "microsoft/swin-base-patch4-window7-224"
+  swin-base-224-22k: "microsoft/swin-base-patch4-window7-224-in22k"
+  swin-base-384: "microsoft/swin-base-patch4-window12-384"
+  swin-large-384-22k: "microsoft/swin-large-patch4-window12-384-in22k" # SOTA among SWin's
+
+  # BEiT Transformers
+  beit-base-224: "microsoft/beit-base-patch16-224"
+  beit-base-224-22k: "microsoft/beit-base-patch16-224-pt22k"
+  beit-large-224-22k: "microsoft/beit-large-patch16-224-pt22k-ft22k" # SOTA among BEiT's
+  beit-large-512: "microsoft/beit-large-patch16-512" # SOTA among BEiT's in specific tasks
+  beit-large-640: "microsoft/beit-large-finetuned-ade-640-640" # SOTA among BEiT's in specific tasks
+
+  # DEiT Transformers:
+  deit-base-224: "facebook/deit-base-patch16-224"
+  deit-base-distil-224: "facebook/deit-base-distilled-patch16-224"
+  deit-base-384: "facebook/deit-base-patch16-384"
+  deit-base-distil-384: "facebook/deit-base-distilled-patch16-384" # SOTA among DEiT's
+
+decoder:
+  # Encoder-only Transformers (BERT-like)
+  distilbert-base: "adalbertojunior/distilbert-portuguese-cased"
+  bert-base: "neuralmind/bert-base-portuguese-cased"
+  bert-large: "neuralmind/bert-large-portuguese-cased"
+  roberta-small: "josu/roberta-pt-br"
+
+  # Decoder-only Transformers (GPT-like)
+  gpt2-small: "pierreguillou/gpt2-small-portuguese"
+
+  # Seq-to-Seq Transformers (Seq2Seq Decoder-based)
+  bart-base: "adalbertojunior/bart-base-portuguese"
