@@ -1,0 +1,12 @@
+pyyaml
+tqdm
+accelerate
+torch
+transformers
+rouge_score
+bert_score
+evaluate
+datasets
+wandb
+python-dotenv
+aac-metrics # Python 3.9 required
