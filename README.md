@@ -10,8 +10,9 @@
 </div>
 
 ### Open-stuff available in
-- [Flickr30K Portuguese dataset (translated with Google Translator API)](https://huggingface.co/datasets/laicsiifes/flickr30k-pt-br)
-- [Swin-DistilBERT (best evaluated model)](laicsiifes/swin-base-224-distilbert-base-flickr30k-pt-br)
+- :floppy_disk: [Flickr30K Portuguese dataset (translated with Google Translator API)](https://huggingface.co/datasets/laicsiifes/flickr30k-pt-br)
+- :1st_place_medal: [Swin-DistilBERT (1st place model in Flickr30K Portuguese)](https://huggingface.co/laicsiifes/swin-distilbert-flickr30k-pt-br)
+- :2nd_place_medal: [Swin-GPT-2 (2nd place model in Flickr30K Portuguese)](https://huggingface.co/laicsiifes/swin-gpt2-flickr30k-pt-br)
 
  
 ### :wrench: To set up the envionment, use:
