@@ -97,8 +97,6 @@ def load_datasets(data_dir, step='train'):
     ----------
     data_dir : str
         The directory containing the dataset files.
-    preprocess_fn : callable
-        The preprocessing function to apply to the datasets.
     step : str, optional
         The step of the pipeline ('train' or 'eval'), by default 'train'.
 
