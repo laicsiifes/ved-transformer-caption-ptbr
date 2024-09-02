@@ -126,3 +126,17 @@ decoder:
     ├── eval.py
     └── train.py
 ```
+
+### 📋 BibTex entry and citation info
+
+```bibtex
+@inproceedings{bromonschenkel2024comparative,
+                title = "A Comparative Evaluation of Transformer-Based Vision 
+                         Encoder-Decoder Models for Brazilian Portuguese Image Captioning",
+               author = "Bromonschenkel, Gabriel and Oliveira, Hil{\'a}rio and 
+                         Paix{\~a}o, Thiago M.",
+            booktitle = "Proceedings...",
+         organization = "Conference on Graphics, Patterns and Images, 37. (SIBGRAPI)",
+                 year = "2024",
+}
+```
