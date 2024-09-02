@@ -16,23 +16,23 @@
 
  
 ### :wrench: To set up the envionment, use:
-```
+```bash
 $ chmod +x setup.sh
 $ ./setup.sh
 ```
 
 ### :gear: To run the complete train and evaluate, use:
-```
+```bash
 $ python train.py
 ```
 
 ### :gear: To run only the evaluation, use:
-```
+```bash
 $ python eval.py
 ```
 
 ### :tophat: Don't forget of setting up the training/model attributes in ```config.yml```. An example:
-```
+```yaml
 config:
   encoder: "deit-base-224"
   decoder: "roberta-small"
