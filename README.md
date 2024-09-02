@@ -9,7 +9,9 @@
  <img src='https://github.com/gabrielmotablima/ppcomp-image-captioning/assets/31813682/53c1301b-fd6e-41c0-be07-18d83d5a7b68' width='800'>
 </div>
 
-### Open-stuff available in
+<br>
+
+**Open-stuff available in**
 - :floppy_disk: [Flickr30K Portuguese dataset (translated with Google Translator API)](https://huggingface.co/datasets/laicsiifes/flickr30k-pt-br)
 - :1st_place_medal: [Swin-DistilBERT (1st place model in Flickr30K Portuguese)](https://huggingface.co/laicsiifes/swin-distilbert-flickr30k-pt-br)
 - :2nd_place_medal: [Swin-GPT-2 (2nd place model in Flickr30K Portuguese)](https://huggingface.co/laicsiifes/swin-gpt2-flickr30k-pt-br)
@@ -31,7 +33,7 @@ $ python train.py
 $ python eval.py
 ```
 
-### :tophat: Don't forget of setting up the training/model attributes in ```config.yml```. An example:
+### 🗃️ Don't forget of setting up the training/model attributes in ```config.yml```. An example:
 ```yaml
 config:
   encoder: "deit-base-224"
@@ -71,7 +73,7 @@ callbacks:
     patience: 1
     threshold: 0.0
 
-encoder:
+encoder: # Available options to select in config.encoder at the top of theis document
   vit-base-224: "google/vit-base-patch16-224"
   vit-base-224-21k: "google/vit-base-patch16-224-in21k"
   vit-base-384: "google/vit-base-patch16-384"
@@ -91,7 +93,7 @@ encoder:
   deit-base-384: "facebook/deit-base-patch16-384"
   deit-base-distil-384: "facebook/deit-base-distilled-patch16-384"
 
-decoder:
+decoder: # Available options to select in config.decoder at the top of theis document
   bert-base: "neuralmind/bert-base-portuguese-cased"
   bert-large: "neuralmind/bert-large-portuguese-cased"
   roberta-small: "josu/roberta-pt-br"
