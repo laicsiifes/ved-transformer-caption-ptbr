@@ -34,7 +34,7 @@ $ python train.py
 $ python eval.py
 ```
 
-### 🗃️ Don't forget of setting up the training/model attributes in ```config.yml```. An example:
+### :wrench: Don't forget of setting up the training/model attributes in ```config.yml```. An example:
 ```yaml
 config:
   encoder: "deit-base-224"
@@ -103,7 +103,7 @@ decoder: # available options to select in config.decoder at the top of this docu
   bart-base: "adalbertojunior/bart-base-portuguese"
 ```
 
-### :barber: Directory structure:
+### 🗃️ Directory structure:
 ```
 ├── README.md          <- The top-level README for developers using this project.
 ├── data
