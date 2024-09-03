@@ -38,7 +38,7 @@ $ python eval.py
 ```yaml
 config:
   encoder: "deit-base-224"
-  decoder: "roberta-small"
+  decoder: "gpt2-small"
   dataset: "pracegover_63k"
   max_length: 25
   batch_size: 16
@@ -74,7 +74,7 @@ callbacks:
     patience: 1
     threshold: 0.0
 
-encoder: # Available options to select in config.encoder at the top of theis document
+encoder: # available options to select in config.encoder at the top of this document
   vit-base-224: "google/vit-base-patch16-224"
   vit-base-224-21k: "google/vit-base-patch16-224-in21k"
   vit-base-384: "google/vit-base-patch16-384"
@@ -94,7 +94,7 @@ encoder: # Available options to select in config.encoder at the top of theis doc
   deit-base-384: "facebook/deit-base-patch16-384"
   deit-base-distil-384: "facebook/deit-base-distilled-patch16-384"
 
-decoder: # Available options to select in config.decoder at the top of theis document
+decoder: # available options to select in config.decoder at the top of this document
   bert-base: "neuralmind/bert-base-portuguese-cased"
   bert-large: "neuralmind/bert-large-portuguese-cased"
   roberta-small: "josu/roberta-pt-br"
