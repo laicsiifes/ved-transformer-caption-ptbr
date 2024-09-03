@@ -140,6 +140,6 @@ decoder: # available options to select in config.decoder at the top of this docu
                          Paix{\~a}o, Thiago M.",
             booktitle = "Proceedings...",
          organization = "Conference on Graphics, Patterns and Images, 37. (SIBGRAPI)",
-                 year = "2024",
+                 year = "2024"
 }
 ```
