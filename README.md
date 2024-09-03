@@ -13,8 +13,8 @@
 
 **Open-stuff available in**
 - :floppy_disk: [Flickr30K Portuguese dataset (translated with Google Translator API)](https://huggingface.co/datasets/laicsiifes/flickr30k-pt-br)
-- :1st_place_medal: [Swin-DistilBERT (1st place model in Flickr30K Portuguese)](https://huggingface.co/laicsiifes/swin-distilbert-flickr30k-pt-br)
-- :2nd_place_medal: [Swin-GPT-2 (2nd place model in Flickr30K Portuguese)](https://huggingface.co/laicsiifes/swin-gpt2-flickr30k-pt-br)
+- :1st_place_medal: [Swin-DistilBERTimbau (1st place model in Flickr30K Portuguese)](https://huggingface.co/laicsiifes/swin-distilbertimbau)
+- :2nd_place_medal: [Swin-GPorTuguese-2 (2nd place model in Flickr30K Portuguese)](https://huggingface.co/laicsiifes/swin-gportuguese-2)
 
 **or access our** [public available collection](https://huggingface.co/collections/laicsiifes/vision-encoder-decoder-brazilian-portuguese-image-captioning-66d6280c9e7dbd3be32d2770).
  
