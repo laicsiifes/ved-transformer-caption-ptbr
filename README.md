@@ -6,7 +6,7 @@
 
 <div align="center">
   <h1>SIBGRAPI 2024</h1>
- <img src='https://github.com/gabrielmotablima/ppcomp-image-captioning/assets/31813682/53c1301b-fd6e-41c0-be07-18d83d5a7b68' width='800'>
+ <img src='/images/dog-image-captioning.png' width='800'>
 </div>
 
 <br>
