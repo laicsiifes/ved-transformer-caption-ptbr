@@ -134,12 +134,11 @@ decoder: # available options to select in config.decoder at the top of this docu
 
 ```bibtex
 @inproceedings{bromonschenkel2024comparative,
-                title = "A Comparative Evaluation of Transformer-Based Vision 
-                         Encoder-Decoder Models for Brazilian Portuguese Image Captioning",
-               author = "Bromonschenkel, Gabriel and Oliveira, Hil{\'a}rio and 
-                         Paix{\~a}o, Thiago M.",
-            booktitle = "Proceedings...",
-         organization = "Conference on Graphics, Patterns and Images, 37. (SIBGRAPI)",
-                 year = "2024"
+  title={A Comparative Evaluation of Transformer-Based Vision Encoder-Decoder Models for Brazilian Portuguese Image Captioning},
+  author={Bromonschenkel, Gabriel and Oliveira, Hil{\'a}rio and Paix{\~a}o, Thiago M},
+  booktitle={2024 37th SIBGRAPI Conference on Graphics, Patterns and Images (SIBGRAPI)},
+  pages={1--6},
+  year={2024},
+  organization={IEEE}
 }
 ```
