@@ -18,7 +18,7 @@
 
 **or access our** [publicly available collection](https://huggingface.co/collections/laicsiifes/vision-encoder-decoder-brazilian-portuguese-image-captioning-66d6280c9e7dbd3be32d2770).
  
-### :wrench: To set up the envionment, use:
+### :wrench: To set up the environment, use:
 ```bash
 $ chmod +x setup.sh
 $ ./setup.sh
