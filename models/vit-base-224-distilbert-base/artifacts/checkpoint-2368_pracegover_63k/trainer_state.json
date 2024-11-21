@@ -1,0 +1,40 @@
+{
+  "best_metric": 0.4736722674942404,
+  "best_model_checkpoint": "../models/vit-base-224-distilbert-base/artifects/checkpoint-2368",
+  "epoch": 1.0,
+  "eval_steps": 200,
+  "global_step": 2368,
+  "is_hyper_param_search": false,
+  "is_local_process_zero": true,
+  "is_world_process_zero": true,
+  "log_history": [
+    {
+      "epoch": 1.0,
+      "grad_norm": 3.1292917728424072,
+      "learning_rate": 4.7501055743243244e-05,
+      "loss": 2.8923,
+      "step": 2368
+    },
+    {
+      "epoch": 1.0,
+      "eval_loss": 2.4656894207000732,
+      "eval_rouge1": 0.48434398841849746,
+      "eval_rouge2": 0.4124746135029642,
+      "eval_rougeL": 0.4736722674942404,
+      "eval_rougeLsum": 0.4736952857289297,
+      "eval_runtime": 331.8773,
+      "eval_samples_per_second": 37.49,
+      "eval_steps_per_second": 2.344,
+      "step": 2368
+    }
+  ],
+  "logging_steps": 200,
+  "max_steps": 47360,
+  "num_input_tokens_seen": 0,
+  "num_train_epochs": 20,
+  "save_steps": 500,
+  "total_flos": 4.917194018983121e+18,
+  "train_batch_size": 16,
+  "trial_name": null,
+  "trial_params": null
+}

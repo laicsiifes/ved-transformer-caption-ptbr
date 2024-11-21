@@ -1,0 +1,40 @@
+{
+  "best_metric": 0.20840729314981188,
+  "best_model_checkpoint": "../models/swin-base-224-bert-base/artifects/checkpoint-2368",
+  "epoch": 1.0,
+  "eval_steps": 200,
+  "global_step": 2368,
+  "is_hyper_param_search": false,
+  "is_local_process_zero": true,
+  "is_world_process_zero": true,
+  "log_history": [
+    {
+      "epoch": 1.0,
+      "grad_norm": 4.65833854675293,
+      "learning_rate": 4.7504222972972976e-05,
+      "loss": 2.4561,
+      "step": 2368
+    },
+    {
+      "epoch": 1.0,
+      "eval_loss": 2.177119731903076,
+      "eval_rouge1": 0.21011952113394777,
+      "eval_rouge2": 0.1795404854846281,
+      "eval_rougeL": 0.20840729314981188,
+      "eval_rougeLsum": 0.2083683598901014,
+      "eval_runtime": 496.7943,
+      "eval_samples_per_second": 25.045,
+      "eval_steps_per_second": 1.566,
+      "step": 2368
+    }
+  ],
+  "logging_steps": 200,
+  "max_steps": 47360,
+  "num_input_tokens_seen": 0,
+  "num_train_epochs": 20,
+  "save_steps": 500,
+  "total_flos": 6.89647336744156e+18,
+  "train_batch_size": 16,
+  "trial_name": null,
+  "trial_params": null
+}

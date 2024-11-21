@@ -1,0 +1,40 @@
+{
+  "best_metric": 0.4707168556476127,
+  "best_model_checkpoint": "../models/deit-base-224-distilbert-base/artifects/checkpoint-2368",
+  "epoch": 1.0,
+  "eval_steps": 200,
+  "global_step": 2368,
+  "is_hyper_param_search": false,
+  "is_local_process_zero": true,
+  "is_world_process_zero": true,
+  "log_history": [
+    {
+      "epoch": 1.0,
+      "grad_norm": 3.20231556892395,
+      "learning_rate": 4.7501055743243244e-05,
+      "loss": 2.8784,
+      "step": 2368
+    },
+    {
+      "epoch": 1.0,
+      "eval_loss": 2.4582200050354004,
+      "eval_rouge1": 0.4803678327673514,
+      "eval_rouge2": 0.40904102272012255,
+      "eval_rougeL": 0.4707168556476127,
+      "eval_rougeLsum": 0.4706652607384999,
+      "eval_runtime": 329.1941,
+      "eval_samples_per_second": 37.795,
+      "eval_steps_per_second": 2.363,
+      "step": 2368
+    }
+  ],
+  "logging_steps": 200,
+  "max_steps": 47360,
+  "num_input_tokens_seen": 0,
+  "num_train_epochs": 20,
+  "save_steps": 500,
+  "total_flos": 4.917194018983121e+18,
+  "train_batch_size": 16,
+  "trial_name": null,
+  "trial_params": null
+}
