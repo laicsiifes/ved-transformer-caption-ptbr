@@ -1,0 +1,40 @@
+{
+  "best_metric": 0.21234344722868637,
+  "best_model_checkpoint": "../models/vit-base-224-bert-base/artifects/checkpoint-2368",
+  "epoch": 1.0,
+  "eval_steps": 200,
+  "global_step": 2368,
+  "is_hyper_param_search": false,
+  "is_local_process_zero": true,
+  "is_world_process_zero": true,
+  "log_history": [
+    {
+      "epoch": 1.0,
+      "grad_norm": 4.902853488922119,
+      "learning_rate": 4.750527871621622e-05,
+      "loss": 2.4309,
+      "step": 2368
+    },
+    {
+      "epoch": 1.0,
+      "eval_loss": 2.1960837841033936,
+      "eval_rouge1": 0.2135676286355124,
+      "eval_rouge2": 0.17578751071306406,
+      "eval_rougeL": 0.21234344722868637,
+      "eval_rougeLsum": 0.21225170910133906,
+      "eval_runtime": 462.35,
+      "eval_samples_per_second": 26.91,
+      "eval_steps_per_second": 1.683,
+      "step": 2368
+    }
+  ],
+  "logging_steps": 200,
+  "max_steps": 47360,
+  "num_input_tokens_seen": 0,
+  "num_train_epochs": 20,
+  "save_steps": 500,
+  "total_flos": 6.857430419073798e+18,
+  "train_batch_size": 16,
+  "trial_name": null,
+  "trial_params": null
+}
