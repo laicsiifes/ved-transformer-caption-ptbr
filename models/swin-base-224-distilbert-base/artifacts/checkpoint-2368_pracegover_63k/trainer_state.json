@@ -1,0 +1,40 @@
+{
+  "best_metric": 0.46727902739194827,
+  "best_model_checkpoint": "../models/swin-base-224-distilbert-base/artifects/checkpoint-2368",
+  "epoch": 1.0,
+  "eval_steps": 200,
+  "global_step": 2368,
+  "is_hyper_param_search": false,
+  "is_local_process_zero": true,
+  "is_world_process_zero": true,
+  "log_history": [
+    {
+      "epoch": 1.0,
+      "grad_norm": 3.29384708404541,
+      "learning_rate": 4.7501055743243244e-05,
+      "loss": 2.9098,
+      "step": 2368
+    },
+    {
+      "epoch": 1.0,
+      "eval_loss": 2.49847149848938,
+      "eval_rouge1": 0.4725803739783473,
+      "eval_rouge2": 0.40877874701687705,
+      "eval_rougeL": 0.46727902739194827,
+      "eval_rougeLsum": 0.467300518661715,
+      "eval_runtime": 358.2108,
+      "eval_samples_per_second": 34.734,
+      "eval_steps_per_second": 2.172,
+      "step": 2368
+    }
+  ],
+  "logging_steps": 200,
+  "max_steps": 47360,
+  "num_input_tokens_seen": 0,
+  "num_train_epochs": 20,
+  "save_steps": 500,
+  "total_flos": 4.956236967350882e+18,
+  "train_batch_size": 16,
+  "trial_name": null,
+  "trial_params": null
+}
