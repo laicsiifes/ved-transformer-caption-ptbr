@@ -159,14 +159,4 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 .idea/
 
-# Ignore the content inside the folders
-data/*
-models/*
-docs/*
-
-# Keep the folders with no content
-!data/.gitkeep
-!models/.gitkeep
-!docs/.gitkeep
-
 src/wandb/*
