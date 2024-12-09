@@ -139,7 +139,7 @@ def train_model(config, training_args, generate_args, callbacks):
     generate_results(
         dataset=test_dataset,
         raw_dataset=test_ds,
-        model=model,
+        model=trainer.model,
         config=config,
         collate_fn=collate_fn,
         tokenizer=tokenizer,
