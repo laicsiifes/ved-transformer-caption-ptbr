@@ -44,21 +44,26 @@ def config_vars(setups):
         the computation device, and paths for the output, model, and results directories.
     """
     encoder_decoder_model = f'{setups["config"]["encoder"]}-{setups["config"]["decoder"]}'
-    dataset = setups["config"]["dataset"]
+    dataset_name = setups["config"]["dataset"]
+    test_set_name = setups["config"]["test_dataset"]
 
-    setups["config"] = {
-        "encoder_decoder_model": encoder_decoder_model,
-        "encoder_model": setups["encoder"][setups["config"]["encoder"]],
-        "decoder_model": setups["decoder"][setups["config"]["decoder"]],
-        "device": "cuda" if torch.cuda.is_available() else "cpu",
-        "model_dir": f"../models/{encoder_decoder_model}/{dataset}/model/",
-        "results_dir": f"../models/{encoder_decoder_model}/{dataset}/results/",
-        "max_length": setups["config"]["max_length"],
-        "batch_size": setups["config"]["batch_size"],
-        "evaluate_from_model": setups["config"]["evaluate_from_model"],
-        "turn_off_computer": setups["config"]["turn_off_computer"]
-    }
-    setups["config"]["data_dir"] = os.path.join("../data", dataset)
+    setups["config"]["encoder_decoder_model"] = encoder_decoder_model
+    setups["config"]["encoder_model"] = setups["encoder"][setups["config"]["encoder"]]
+    setups["config"]["decoder_model"] = setups["decoder"][setups["config"]["decoder"]]
+    setups["config"]["device"] = "cuda" if torch.cuda.is_available() else "cpu"
+    setups["config"]["model_dir"] = f"../models/{encoder_decoder_model}/{dataset_name}/model/"
+    setups["config"]["results_dir"] = f"../models/{encoder_decoder_model}/{dataset_name}/results/{test_set_name}"
+    setups["config"]["hf_dataset"] = setups["dataset"][dataset_name]["id"]
+    setups["config"]["hf_test_set"] = setups["dataset"][test_set_name]["id"]
+    setups["config"]["max_length"] = setups["config"]["max_length"]
+    setups["config"]["batch_size"] = setups["config"]["batch_size"]
+    setups["config"]["image_column"] = setups["dataset"][dataset_name]["image_column"]
+    setups["config"]["text_column"] = setups["dataset"][dataset_name]["text_column"]
+    setups["config"]["text_per_image"] = setups["dataset"][dataset_name]["text_per_image"]
+    setups["config"]["evaluate_from_model"] = setups["config"]["evaluate_from_model"]
+    setups["config"]["turn_off_computer"] = setups["config"]["turn_off_computer"]
+    setups["config"]["data_dir"] = os.path.join("../data", dataset_name)
+    setups["config"]["test_data_dir"] = os.path.join("../data", test_set_name)
     setups["training_args"]["output_dir"] = f"../models/{encoder_decoder_model}/artifacts/"
 
     return setups

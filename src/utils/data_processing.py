@@ -38,7 +38,7 @@ import os
 import re
 import torch
 
-from datasets import load_from_disk
+from datasets import load_from_disk, load_dataset
 from torch.utils.data import DataLoader
 
 
@@ -89,32 +89,51 @@ def preprocess(items, tokenizer, image_processor, device, max_length):
     return {'pixel_values': pixel_values, 'labels': targets["input_ids"]}
 
 
-def load_datasets(data_dir, step='train'):
+def load_datasets(data_dir, step='train', hf_dataset=None, dataset_from_hub=False):
     """
-    Load datasets from disk and apply preprocessing function.
+    Load training, validation, and test datasets from either local storage or the Hugging Face Hub.
 
     Parameters
     ----------
     data_dir : str
-        The directory containing the dataset files.
+        Directory path to the local dataset files.
     step : str, optional
-        The step of the pipeline ('train' or 'eval'), by default 'train'.
+        Determines the data loading step, either 'train' or 'eval' (default is 'train').
+    hf_dataset : str, optional
+        Identifier for the Hugging Face Hub dataset, used if `dataset_from_hub` is True.
+    dataset_from_hub : bool, optional
+        Flag to load datasets from the Hugging Face Hub instead of local storage (default is False).
 
     Returns
     -------
     tuple
-        A tuple of datasets (train_ds, valid_ds, test_ds), depending on the step.
+        A tuple containing the training, validation, and test datasets. If `step` is 'eval',
+        only the test dataset is returned with the others set to None.
+
+    Raises
+    ------
+    Exception
+        If `step` is not set to 'train' or 'eval'.
     """
     train_ds, valid_ds, test_ds = None, None, None
+
+    if dataset_from_hub:
+        dataset = load_dataset(hf_dataset)
+
     if step=='train':
-        train_ds = load_from_disk(os.path.join(data_dir, 'train.hf')) #.select(range(16))
-        valid_ds = load_from_disk(os.path.join(data_dir, 'validation.hf')) #.select(range(16))
-        test_ds = load_from_disk(os.path.join(data_dir, 'test.hf')) #.select(range(16))
+        train_ds = dataset['train'] if dataset_from_hub \
+             else load_from_disk(os.path.join(data_dir, 'train.hf'))
+        valid_ds = dataset['validation'] if dataset_from_hub \
+             else load_from_disk(os.path.join(data_dir, 'validation.hf'))
+        test_ds = dataset['test'] if dataset_from_hub \
+             else load_from_disk(os.path.join(data_dir, 'test.hf'))
     elif step=='eval':
         train_ds, valid_ds = None, None
-        test_ds = load_from_disk(os.path.join(data_dir, 'test.hf')) #.select(range(16))
+        test_ds = dataset['test'] if dataset_from_hub \
+             else load_from_disk(os.path.join(data_dir, 'test.hf'))
     else:
         raise Exception("The parameters `step` needs to be equals to `train` or `eval`")
+    
     return train_ds, valid_ds, test_ds
 
 

@@ -5,12 +5,45 @@
 config:
   # model architecture
   # use the abbreviations of the 4th section of this file
-  encoder: "beit-base-224"
-  decoder: "distilbert-base"
+  encoder: "deit-base-224"
+  decoder: "bert-base"
+
+  # encoder: "deit-base-224"
+  # decoder: "distilbert-base"
+
+  # encoder: "deit-base-224"
+  # decoder: "gpt2-small"
+
+  # encoder: "swin-base-224"
+  # decoder: "bert-base"
+
+  # encoder: "swin-base-224"
+  # decoder: "distilbert-base"
+
+  # encoder: "swin-base-224"
+  # decoder: "gpt2-small"
+
+  # encoder: "vit-base-224"
+  # decoder: "bert-base"
+
+  # encoder: "vit-base-224"
+  # decoder: "distilbert-base"
+
+  # encoder: "vit-base-224"
+  # decoder: "gpt2-small"
 
   # dataset for training and evaluation
-  dataset: "flickr30k_pt"
+  dataset: "flickr30k_pt_human_generated"
+  # dataset: "flickr30k_pt"
   # dataset: "pracegover_63k"
+
+  # dataset for testing
+  # it works only for eval.py. It has no effect in train.py, since the model is always
+  # evaluated using the config.dataset
+  test_dataset: "flickr30k_pt_human_generated"
+
+  # dataset from hub
+  dataset_from_hub: True
 
   # for sentence generation config
   max_length: 25 # max length of generated sentence | 70 for pracegover-63k | 25 for flickr30k-pt
@@ -18,7 +51,7 @@ config:
 
   # flag to eval.py, if True it evaluate using the model
   # else it evaluate using the predictions previously saved after training
-  evaluate_from_model: True
+  evaluate_from_model: False
 
   # flag to turn off the computer after the training
   turn_off_computer: False
@@ -107,3 +140,41 @@ decoder:
 
   # Seq-to-Seq Transformers (Seq2Seq Decoder-based)
   bart-base: "adalbertojunior/bart-base-portuguese"
+
+
+##########################################################
+############## 5. IMAGE CAPTIONING DATASETS ##############
+##########################################################
+
+dataset:
+  # Flickr30K randomly sampled with 5k
+  flickr30k_pt:
+    id: "laicsiifes/flickr30k-pt-br"
+    max_length: 25
+    image_column: "image"
+    text_column: "caption"
+    text_per_image: 5
+
+  # Flickr30K randomly sampled with 5k with the human generated captions of FM30K
+  flickr30k_pt_human_generated:
+    id: "laicsiifes/flickr30k-pt-br-human-generated"
+    max_length: 25
+    image_column: "image"
+    text_column: "caption"
+    text_per_image: 5
+
+  # Flickr30K randomly sampled with 5k with the human translated captions of FM30K
+  flickr30k_pt_human_translated:
+    id: "laicsiifes/flickr30k-pt-br-human-translated"
+    max_length: 25
+    image_column: "image"
+    text_column: "caption"
+    text_per_image: 5
+
+  # PraCegoVer randomly sampled with 5k
+  pracegover_63k:
+    id: "laicsiifes/pracegover63k-5k"
+    max_length: 70
+    image_column: "image"
+    text_column: "text"
+    text_per_image: 1
