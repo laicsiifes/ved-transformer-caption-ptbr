@@ -1,11 +1,9 @@
 <div align="center">
-  <h1> A Comparative Evaluation of Transformer-Based Vision Encoder-Decoder Models for Brazilian Portuguese Image Captioning </h1>
-  <!--- ## By Computational Intelligence and Information Systems Laboratory (LAICSI-IFES) --->
-  <p>Gabriel Bromonschenkel, Hilário Oliveira, Thiago M. Paixão</p>
+  <h1> Transformer-Based Vision Encoder-Decoder (VED) Models for Brazilian Portuguese Image Captioning </h1>
+  <p>By Computational Intelligence and Information Systems Laboratory (LAICSI-IFES)</p>
 </div>
 
 <div align="center">
-  <h1>SIBGRAPI 2024</h1>
  <img src='/images/dog-image-captioning.png' width='800'>
 </div>
 
