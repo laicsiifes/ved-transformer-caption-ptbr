@@ -183,7 +183,7 @@ dataset:
     text_column: "caption"
     text_per_image: 5
 
-  # PraCegoVer randomly sampled with 5k (not available)
+  # PraCegoVer randomly sampled with 5k (unavailable)
   pracegover_63k:
     id: "laicsiifes/pracegover63k-5k"
     max_length: 70
