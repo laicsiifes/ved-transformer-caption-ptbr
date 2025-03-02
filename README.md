@@ -34,28 +34,64 @@ $ python eval.py
 
 ### :wrench: Don't forget of setting up the training/model attributes in ```config.yml```. An example:
 ```yaml
+##########################################################
+################### 1. GENERAL CONFIGS ###################
+##########################################################
+
 config:
+  # model architecture
+  # use the abbreviations of the 4th section of this file
   encoder: "deit-base-224"
-  decoder: "gpt2-small"
-  dataset: "pracegover_63k"
-  max_length: 25
-  batch_size: 16
+  decoder: "bert-base"
+
+  # dataset for training and evaluation
+  dataset: "flickr30k_pt_human_generated"
+  # dataset: "flickr30k_pt"
+  # dataset: "pracegover_63k"
+
+  # dataset for testing
+  # it works only for eval.py. It has no effect in train.py, since the model is always
+  # evaluated using the config.dataset
+  test_dataset: "flickr30k_pt_human_generated"
+
+  # dataset from hub
+  dataset_from_hub: True
+
+  # for sentence generation config
+  max_length: 25 # max length of generated sentence | 70 for pracegover-63k | 25 for flickr30k-pt
+  batch_size: 16 # batch size for training and sentence generation | 16 for small models | 8 for bigger models
+
+  # flag to eval.py, if True it evaluate using the model
+  # else it evaluate using the predictions previously saved after training
   evaluate_from_model: False
+
+  # flag to turn off the computer after the training
   turn_off_computer: False
 
+
+##########################################################
+################# 2. GENERATION CONFIGS ##################
+##########################################################
+
 generate_args:
-  num_beams: 1
-  no_repeat_ngram_size: 0
-  early_stopping: False
+  # for model generate function 
+  num_beams: 5 # Default 5
+  no_repeat_ngram_size: 0 # Default 0
+  early_stopping: False # Default False
+
+
+##########################################################
+################## 3. TRAINING CONFIGS ###################
+##########################################################
 
 training_args:
   predict_with_generate: True
-  num_train_epochs: 1
+  num_train_epochs: 20 # Use 20 for the experiments
   eval_steps: 200
   logging_steps: 200
   per_device_train_batch_size: 16
   per_device_eval_batch_size: 16
-  learning_rate: 5.6e-5
+  learning_rate: 5.0e-5
   weight_decay: 0.01
   save_total_limit: 1
   logging_strategy: "epoch"
@@ -69,36 +105,91 @@ training_args:
 
 callbacks:
   early_stopping:
-    patience: 1
-    threshold: 0.0
+    patience: 20 # Default 1
+    threshold: 0.0 # Default 0.0
 
-encoder: # available options to select in config.encoder at the top of this document
+
+##########################################################
+########### 4. AVAILABLE ENCODERS AND DECODERS ###########
+##########################################################
+
+encoder:
+  # Vision Tranformers
   vit-base-224: "google/vit-base-patch16-224"
   vit-base-224-21k: "google/vit-base-patch16-224-in21k"
   vit-base-384: "google/vit-base-patch16-384"
   vit-large-384: "google/vit-large-patch16-384"
-  vit-huge-224-21k: "google/vit-huge-patch14-224-in21k"
+  vit-huge-224-21k: "google/vit-huge-patch14-224-in21k" # SOTA among ViT's
+
+  # SWin Transformers
   swin-base-224: "microsoft/swin-base-patch4-window7-224"
   swin-base-224-22k: "microsoft/swin-base-patch4-window7-224-in22k"
   swin-base-384: "microsoft/swin-base-patch4-window12-384"
-  swin-large-384-22k: "microsoft/swin-large-patch4-window12-384-in22k"
+  swin-large-384-22k: "microsoft/swin-large-patch4-window12-384-in22k" # SOTA among SWin's
+
+  # BEiT Transformers
   beit-base-224: "microsoft/beit-base-patch16-224"
   beit-base-224-22k: "microsoft/beit-base-patch16-224-pt22k"
-  beit-large-224-22k: "microsoft/beit-large-patch16-224-pt22k-ft22k"
-  beit-large-512: "microsoft/beit-large-patch16-512"
-  beit-large-640: "microsoft/beit-large-finetuned-ade-640-640"
+  beit-large-224-22k: "microsoft/beit-large-patch16-224-pt22k-ft22k" # SOTA among BEiT's
+  beit-large-512: "microsoft/beit-large-patch16-512" # SOTA among BEiT's in specific tasks
+  beit-large-640: "microsoft/beit-large-finetuned-ade-640-640" # SOTA among BEiT's in specific tasks
+
+  # DEiT Transformers:
   deit-base-224: "facebook/deit-base-patch16-224"
   deit-base-distil-224: "facebook/deit-base-distilled-patch16-224"
   deit-base-384: "facebook/deit-base-patch16-384"
-  deit-base-distil-384: "facebook/deit-base-distilled-patch16-384"
+  deit-base-distil-384: "facebook/deit-base-distilled-patch16-384" # SOTA among DEiT's
 
-decoder: # available options to select in config.decoder at the top of this document
+decoder:
+  # Encoder-only Transformers (BERT-like)
+  distilbert-base: "adalbertojunior/distilbert-portuguese-cased"
   bert-base: "neuralmind/bert-base-portuguese-cased"
   bert-large: "neuralmind/bert-large-portuguese-cased"
   roberta-small: "josu/roberta-pt-br"
-  distilbert-base: "adalbertojunior/distilbert-portuguese-cased"
+
+  # Decoder-only Transformers (GPT-like)
   gpt2-small: "pierreguillou/gpt2-small-portuguese"
+
+  # Seq-to-Seq Transformers (Seq2Seq Decoder)
   bart-base: "adalbertojunior/bart-base-portuguese"
+
+
+##########################################################
+############## 5. IMAGE CAPTIONING DATASETS ##############
+##########################################################
+
+dataset:
+  # Flickr30K randomly sampled with 5k
+  flickr30k_pt:
+    id: "laicsiifes/flickr30k-pt-br"
+    max_length: 25
+    image_column: "image"
+    text_column: "caption"
+    text_per_image: 5
+
+  # Flickr30K randomly sampled with 5k with the human generated captions of FM30K
+  flickr30k_pt_human_generated:
+    id: "laicsiifes/flickr30k-pt-br-human-generated"
+    max_length: 25
+    image_column: "image"
+    text_column: "caption"
+    text_per_image: 5
+
+  # Flickr30K randomly sampled with 5k with the human translated captions of FM30K
+  flickr30k_pt_human_translated:
+    id: "laicsiifes/flickr30k-pt-br-human-translated"
+    max_length: 25
+    image_column: "image"
+    text_column: "caption"
+    text_per_image: 5
+
+  # PraCegoVer randomly sampled with 5k (not available)
+  pracegover_63k:
+    id: "laicsiifes/pracegover63k-5k"
+    max_length: 70
+    image_column: "image"
+    text_column: "text"
+    text_per_image: 1
 ```
 
 ### 🗃️ Directory structure:
