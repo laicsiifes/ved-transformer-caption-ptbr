@@ -138,7 +138,7 @@ decoder:
   # Decoder-only Transformers (GPT-like)
   gpt2-small: "pierreguillou/gpt2-small-portuguese"
 
-  # Seq-to-Seq Transformers (Seq2Seq Decoder-based)
+  # Seq-to-Seq Transformers (Seq2Seq Decoder)
   bart-base: "adalbertojunior/bart-base-portuguese"
 
 
@@ -171,7 +171,7 @@ dataset:
     text_column: "caption"
     text_per_image: 5
 
-  # PraCegoVer randomly sampled with 5k
+  # PraCegoVer randomly sampled with 5k (unavailable)
   pracegover_63k:
     id: "laicsiifes/pracegover63k-5k"
     max_length: 70
