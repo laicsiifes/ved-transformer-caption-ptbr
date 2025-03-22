@@ -76,7 +76,12 @@ def evaluate_from_model(config, generate_args):
         max_length=config["max_length"]
     )
 
-    _, _, test_ds = load_datasets(config["data_dir"], step='eval')
+    _, _, test_ds = load_datasets(
+        data_dir=config["test_data_dir"],
+        step='eval',
+        hf_dataset=config["hf_test_set"],
+        dataset_from_hub=config["dataset_from_hub"]
+    )
     _, _, test_dataset = transform_datasets(
         test_ds=test_ds,
         preprocess_fn=preprocess_fn,
@@ -155,7 +160,7 @@ if __name__ == "__main__":
     """
     load_dotenv(dotenv_path="../.env")
     login(os.getenv("HF_API_KEY"))
-    
+
     with open('../config.yml', 'r') as file:
         setups = config_vars(yaml.safe_load(file))
 
