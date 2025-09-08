@@ -156,7 +156,13 @@ def get_sample_and_remainder(original_list, sample_size):
     return sample_list, remainder_list
 
 
-def preprocess(sample_size, question, text_per_image, image_column, text_column):
+def preprocess(
+    correct_sample_size,
+    incorrect_sample_size,
+    text_per_image,
+    image_column,
+    text_column
+    ):
     """
     Prepares and preprocesses images and captions for model input, adjusting image mode 
     and duplicating entries as needed.
@@ -200,29 +206,44 @@ def preprocess(sample_size, question, text_per_image, image_column, text_column)
         filenames = items['filename']
         max_size = len(answers[0])
 
-        if sample_size > max_size:
+        if correct_sample_size > max_size:
             print(f"Sample size is larger than the original list size. Setting it to the original list size: {max_size}.")
-            sample_size = max_size
+            correct_sample_size = max_size
 
         if text_per_image > 1: # For Flickr30K (5 captions per image)
             all_indices = [[i for i in range(len(sentences))] for sentences in answers]
-            idx_choices = [random.sample(indices, sample_size) for indices in all_indices]
-            idx_remainder = [[item for item in indices if item not in idx_choice] for idx_choice, indices in zip(idx_choices, all_indices)]
+            correct_group_indices = [random.sample(indices, correct_sample_size) for indices in all_indices]
+            control_group_indices = [[item for item in indices if item not in idx_choice] for idx_choice, indices in zip(correct_group_indices, all_indices)]
 
-            # control_group = [[sentences[idx] for idx in idx_choices] for sentences in answers]
-            # testing_group = [[sentences[idx] for idx in idx_remainder] for sentences in answers]
-            control_group = [[sentences[idx] for idx in idx_choices] for sentences in answers for _ in range(max_size - sample_size)]
-            testing_group = [sentences[idx] for sentences in answers for idxs in idx_remainder for idx in idxs]
+            correct_group = [[sentences[idx] for idx in correct_group_indices] for sentences in answers]
+            control_group = [[sentences[idx] for idx in control_group_indices] for sentences in answers]
+            # correct_group = [[sentences[idx] for idx in correct_group_indices] for sentences in answers for _ in range(max_size - correct_sample_size)]
+            # correct_group_indices = [idx for idx in correct_group_indices for _ in range(max_size - correct_sample_size)]
+            # control_group = [sentences[idx] for sentences, idxs in zip(answers, control_group_indices) for idx in idxs]
+            # control_group_indices = [idx for idxs in control_group_indices for idx in idxs]
+            # filenames = [filename for filename in filenames for _ in range(max_size - correct_sample_size)]
+            # images = [image for image in images for _ in range(max_size - correct_sample_size)]
+
+            filenames_indices = [i for i in range(len(filenames))]
+
+            for i in range(len(filenames)):
+                filenames_wo_1 = filenames_indices[:i] + filenames_indices[i+1:]
+                incorrect_filenames = random.sample(filenames_wo_1, incorrect_sample_size)
+                incorrect_group_indices = [(filenames[f], f, random.sample(all_indices[f], 1)) for f in incorrect_filenames]
+                incorrect_group = [answers[f][j] for filename, f, j in incorrect_group_indices]
+
 
 
         return {
             "filename": filenames,
             "image": images,
             "answers": answers,
+            "correct_group": correct_group,
+            "correct_group_indices": correct_group_indices,
+            "incorrect_group": incorrect_group,
+            "incorrect_group_indices": incorrect_group_indices,
             "control_group": control_group,
-            "control_group_indices": idx_choices,
-            "testing_group": testing_group,
-            "control_group_indices": idx_remainder
+            "control_group_indices": control_group_indices
         }
 
     return map_item

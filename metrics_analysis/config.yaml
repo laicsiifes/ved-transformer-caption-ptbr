@@ -7,10 +7,9 @@ config:
   dataset: "flickr30k_pt_human_generated"
   # dataset: "flickr30k_pt"
 
-  # dataset for testing
-  # it works only for eval.py. It has no effect in train.py, since the model is always
-  # evaluated using the config.dataset
-  sample_size: 2 # The maximum is 5 (5 captions), sample_size is the number N between 1 and 5, to select N captions among the 5 originals
+  # size of the samples for correct and incorrect
+  correct_sample_size: 2 # The maximum is 5 (5 captions), sample_size is the number N between 1 and 5, to select N captions among the 5 originals
+  incorrect_sample_size: 10 # The maximum is 4995, the captions that are not part of the 5 ground-truth captions
 
   # dataset from hub
   dataset_from_hub: True
