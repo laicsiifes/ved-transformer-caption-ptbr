@@ -2,14 +2,14 @@ pyyaml==6.0.2
 tqdm==4.66.5
 accelerate==1.0.1
 torch
-transformers==4.45.2 # The 3 models work in this version
+transformers==4.46.1 # 4.45.2 - The 3 models work in this version
 rouge_score==0.1.2
 bert_score==0.3.13
 evaluate==0.4.3
 datasets==3.0.2
 wandb==0.18.5
 python-dotenv==1.0.1
-# aac-metrics==0.5.4 # Python 3.9 required
+aac-metrics==0.5.4 # Python 3.9 required
 peft==0.13.2
 bitsandbytes==0.44.1
 huggingface_hub==0.26.1

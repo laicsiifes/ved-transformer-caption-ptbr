@@ -1,0 +1,57 @@
+##########################################################
+################### 1. GENERAL CONFIGS ###################
+##########################################################
+
+config:
+  # dataset for training and evaluation
+  dataset: "flickr30k_pt_human_generated"
+  # dataset: "flickr30k_pt"
+
+  # dataset for testing
+  # it works only for eval.py. It has no effect in train.py, since the model is always
+  # evaluated using the config.dataset
+  sample_size: 2 # The maximum is 5 (5 captions), sample_size is the number N between 1 and 5, to select N captions among the 5 originals
+
+  # dataset from hub
+  dataset_from_hub: True
+
+  # flag to turn off the computer after the training
+  turn_off_computer: False
+
+
+##########################################################
+############## 2. IMAGE CAPTIONING DATASETS ##############
+##########################################################
+
+dataset:
+  # Flickr30K randomly sampled with 5k
+  flickr30k_pt:
+    id: "laicsiifes/flickr30k-pt-br"
+    max_length: 25
+    image_column: "image"
+    text_column: "caption"
+    text_per_image: 5
+
+  # Flickr30K randomly sampled with 5k with the human generated captions of FM30K
+  flickr30k_pt_human_generated:
+    id: "laicsiifes/flickr30k-pt-br-human-generated"
+    max_length: 25
+    image_column: "image"
+    text_column: "caption"
+    text_per_image: 5
+
+  # Flickr30K randomly sampled with 5k with the human translated captions of FM30K
+  flickr30k_pt_human_translated:
+    id: "laicsiifes/flickr30k-pt-br-human-translated"
+    max_length: 25
+    image_column: "image"
+    text_column: "caption"
+    text_per_image: 5
+
+  # PraCegoVer randomly sampled with 5k (unavailable)
+  pracegover_63k:
+    id: "laicsiifes/pracegover63k-5k"
+    max_length: 70
+    image_column: "image"
+    text_column: "text"
+    text_per_image: 1

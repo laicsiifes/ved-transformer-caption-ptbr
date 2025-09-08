@@ -24,19 +24,14 @@ import time
 import yaml
 import pandas as pd
 
-from config.config import config_vars, configure_model_and_processor
+from config.config import config_vars
 
 from data_prep.data_processing import (
     load_datasets,
-    preprocess, 
-    preprocess_for_API,
+    preprocess,
     transform_datasets
 )
-from data_prep.data_collator import DataCollatorForGeneration
-
-from evaluation.eval_prediction import evaluate_predictions
-
-from generation.generation import batch_generation, batch_generation_from_API
+from evaluation.eval_captions import evaluate_captions
 
 from pprint import pprint
 from dotenv import load_dotenv
@@ -60,6 +55,7 @@ def analyze(config, generate_args):
         Writes the evaluation metrics to a CSV file in the specified results directory.
 
     """
+    # Load datasets from HuggingFace Hub
     _, _, test_ds = load_datasets(
         data_dir=config["test_data_dir"],
         step='eval',
@@ -67,9 +63,26 @@ def analyze(config, generate_args):
         dataset_from_hub=config["dataset_from_hub"]
     )
 
+    print('\nDataset')
+    print(f'\tTest: {len(test_ds)}\n')
+
+    # Prepare datasets to be used
+    train_dataset, valid_dataset, test_dataset = transform_datasets(
+        train_ds=train_ds,
+        valid_ds=valid_ds,
+        test_ds=test_ds,
+        preprocess_fn=preprocess(
+            sample_size=config["sample_size"],
+            question=config["question"],
+            text_per_image=config["text_per_image"],
+            image_column=config["image_column"],
+            text_column=config["text_column"],
+        ),
+        step='eval'
+    )
+
     evaluate_predictions(
-        raw_dataset=test_ds,
-        predictions=,
+        dataset=test_ds,
         text_per_image=config["text_per_image"],
         text_column=config["text_column"],
         results_dir=config["results_dir"]
@@ -84,7 +97,7 @@ if __name__ == "__main__":
     load_dotenv(dotenv_path="../.env")
     login(os.getenv("HF_API_KEY"))
 
-    with open('config/config_inference.yml', 'r') as file:
+    with open('config.yml', 'r') as file:
         setups = config_vars(yaml.safe_load(file))
 
     print('\nConfiguration:', end='\t')
@@ -93,16 +106,7 @@ if __name__ == "__main__":
     if not os.path.exists(setups["config"]['results_dir']):
         os.makedirs(setups["config"]['results_dir'])
 
-    if setups["config"]["evaluate_from_model"] and \
-       setups["config"]["model_name"][-3:].upper() == "API":
-        evaluate_from_API(config=setups["config"])
-    elif setups["config"]["evaluate_from_model"]:
-        evaluate_from_model(
-            config=setups["config"],
-            generate_args=setups["generate_args"]
-        )
-    else:
-        evaluate_from_predictions(config=setups["config"])
+    analyze(config=setups["config"])
 
     if setups["config"]["turn_off_computer"]:
         print('\nTurning off computer ...')

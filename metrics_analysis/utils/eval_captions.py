@@ -134,7 +134,7 @@ def compute_individual_metrics(predictions, labels, metrics, images_names, datas
     }
 
 
-def compute_all_metrics(predictions, dataset, text_per_image, text_column):
+def compute_all_metrics(dataset, text_per_image, text_column):
     """
     Evaluate and compute various metrics for image captioning predictions, including BERTScore, 
     CLIPScore, ROUGE, BLEU, and METEOR, with both individual and aggregated scores.
@@ -158,8 +158,9 @@ def compute_all_metrics(predictions, dataset, text_per_image, text_column):
         A dictionary with both individual and aggregated scores.
     """
     images_names = dataset['filename']
-    labels = dataset[text_column]
-
+    control_group = dataset['control_group']
+    testing_group = dataset['testing_group']
+    
     evaluate.enable_progress_bar()
 
     metrics = {
@@ -177,15 +178,9 @@ def compute_all_metrics(predictions, dataset, text_per_image, text_column):
     else:
         print(f"CIDEr-D metric is available, importing...")
 
-    # One image has one predicted caption, but it can hold N reference caption
-    # Group them in list of lists
-    if not isinstance(labels[0], list):
-        labels = [labels[i * text_per_image:(i + 1) * text_per_image] for i, _ in enumerate(images_names)]
-    predictions = [predictions[i * text_per_image] for i, _ in enumerate(images_names)]
-
     print("Computing Metrics Individually")
     individual_metrics = compute_individual_metrics(
-        predictions, labels, metrics, images_names, dataset
+        testing_group, control_group, metrics, images_names, dataset
     )
 
     print("Computing Metrics Total")
@@ -195,12 +190,12 @@ def compute_all_metrics(predictions, dataset, text_per_image, text_column):
         "bertscore_f1": np.mean(individual_metrics["bertscore_f1"]),
         "clipscore": np.mean(individual_metrics["clipscore"]),
         "ref_clipscore": np.mean(individual_metrics["ref_clipscore"]),
-        **compute_rouge_scores(predictions, labels, metrics["rouge"]),
-        **compute_bleu_scores(predictions, labels, metrics["bleu"]),
-        **compute_meteor_scores(predictions, labels, metrics["meteor"]),
+        **compute_rouge_scores(testing_group, control_group, metrics["rouge"]),
+        **compute_bleu_scores(testing_group, control_group, metrics["bleu"]),
+        **compute_meteor_scores(testing_group, control_group, metrics["meteor"]),
         **compute_cider_scores(
-            [re.sub(r"\\.", "", s.encode('unicode_escape').decode()) for s in predictions],
-            [[re.sub(r"\\.", "", s.encode('unicode_escape').decode()) for s in label ] for label in labels],
+            [re.sub(r"\\.", "", s.encode('unicode_escape').decode()) for s in testing_group],
+            [[re.sub(r"\\.", "", s.encode('unicode_escape').decode()) for s in label ] for label in control_group],
             metrics["cider"]
         )
     }
@@ -223,8 +218,8 @@ def compute_all_metrics(predictions, dataset, text_per_image, text_column):
     }
 
 
-def evaluate_predictions(
-        raw_dataset,
+def evaluate_captions(
+        dataset,
         predictions,
         text_per_image,
         text_column,
@@ -237,7 +232,7 @@ def evaluate_predictions(
     ----------
     dataset : Dataset
         The processed dataset for evaluation.
-    raw_dataset : Dataset
+    dataset : Dataset
         The raw dataset used for reference during evaluation.
     model : PreTrainedModel
         The model to be evaluated.
@@ -258,8 +253,7 @@ def evaluate_predictions(
         This function saves evaluation results to CSV files in the specified directories.
     """
     results = compute_all_metrics(
-        predictions=predictions, 
-        dataset=raw_dataset,
+        dataset=dataset,
         text_per_image=text_per_image,
         text_column=text_column
     )
