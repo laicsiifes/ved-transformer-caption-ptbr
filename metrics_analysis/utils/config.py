@@ -43,11 +43,11 @@ def config_vars(setups):
         A dictionary containing configuration variables such as the names of the encoder and decoder models,
         the computation device, and paths for the output, model, and results directories.
     """
-    encoder_decoder_model = f'{setups["config"]["encoder"]}-{setups["config"]["decoder"]}'
     dataset_name = setups["config"]["dataset"]
-    sample_size = setups["config"]["sample_size"]
+    correct_sample_size = setups["config"]["correct_sample_size"]
+    incorrect_sample_size = setups["config"]["incorrect_sample_size"]
 
-    setups["config"]["results_dir"] = f"../results/{dataset_name}/sample_size_{sample_size}"
+    setups["config"]["results_dir"] = f"../results/{dataset_name}/{correct_sample_size}_vs_{incorrect_sample_size}"
     setups["config"]["hf_dataset"] = setups["dataset"][dataset_name]["id"]
     setups["config"]["hf_test_set"] = setups["dataset"][dataset_name]["id"]
     setups["config"]["image_column"] = setups["dataset"][dataset_name]["image_column"]

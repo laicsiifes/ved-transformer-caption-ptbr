@@ -9,7 +9,8 @@ config:
 
   # size of the samples for correct and incorrect
   correct_sample_size: 2 # The maximum is 5 (5 captions), sample_size is the number N between 1 and 5, to select N captions among the 5 originals
-  incorrect_sample_size: 10 # The maximum is 4995, the captions that are not part of the 5 ground-truth captions
+  incorrect_sample_size: 2 # The maximum is 4995, the captions that are not part of the 5 ground-truth captions
+  use_control_as_incorrect: False
 
   # dataset from hub
   dataset_from_hub: True
@@ -25,7 +26,7 @@ config:
 dataset:
   # Flickr30K randomly sampled with 5k
   flickr30k_pt:
-    id: "laicsiifes/flickr30k-pt-br"
+    id: "laicsiifes/flickr30k-pt-br-5k"
     max_length: 25
     image_column: "image"
     text_column: "caption"
@@ -33,7 +34,7 @@ dataset:
 
   # Flickr30K randomly sampled with 5k with the human generated captions of FM30K
   flickr30k_pt_human_generated:
-    id: "laicsiifes/flickr30k-pt-br-human-generated"
+    id: "laicsiifes/flickr30k-pt-br-5k-human-generated"
     max_length: 25
     image_column: "image"
     text_column: "caption"

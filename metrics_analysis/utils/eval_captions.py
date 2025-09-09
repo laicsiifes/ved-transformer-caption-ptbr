@@ -40,7 +40,7 @@ import numpy as np
 
 from tqdm import tqdm
 
-from evaluation.metrics import (
+from utils.metrics import (
     compute_bert_scores,
     compute_clip_scores,
     compute_rouge_scores,

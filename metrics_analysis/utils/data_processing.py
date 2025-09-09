@@ -36,8 +36,12 @@ import os
 import base64
 import random
 
+from pprint import pprint
 from io import BytesIO
-from datasets import load_from_disk, load_dataset
+from datasets import load_from_disk, load_dataset, Dataset, Image, List, Value, Features
+from tqdm import tqdm
+
+tqdm.pandas()
 
 
 def load_datasets(data_dir, step='train', hf_dataset=None, dataset_from_hub=False):
@@ -72,15 +76,15 @@ def load_datasets(data_dir, step='train', hf_dataset=None, dataset_from_hub=Fals
         dataset = load_dataset(hf_dataset)
 
     if step=='train':
-        train_ds = dataset['train'] if dataset_from_hub \
+        train_ds = dataset['train'].select(range(5)) if dataset_from_hub \
              else load_from_disk(os.path.join(data_dir, 'train.hf'))
-        valid_ds = dataset['validation'] if dataset_from_hub \
+        valid_ds = dataset['validation'].select(range(5)) if dataset_from_hub \
              else load_from_disk(os.path.join(data_dir, 'validation.hf'))
-        test_ds = dataset['test'] if dataset_from_hub \
+        test_ds = dataset['test'].select(range(5)) if dataset_from_hub \
              else load_from_disk(os.path.join(data_dir, 'test.hf'))
     elif step=='eval':
         train_ds, valid_ds = None, None
-        test_ds = dataset['test'] if dataset_from_hub \
+        test_ds = dataset['test'].select(range(5)) if dataset_from_hub \
              else load_from_disk(os.path.join(data_dir, 'test.hf'))
     else:
         raise Exception("The parameters `step` needs to be equals to `train` or `eval`")
@@ -88,162 +92,73 @@ def load_datasets(data_dir, step='train', hf_dataset=None, dataset_from_hub=Fals
     return train_ds, valid_ds, test_ds
 
 
-def transform_datasets(train_ds=None, valid_ds=None, test_ds=None, preprocess_fn=None, step='train'):
-    """
-    Transform datasets with preprocessing function.
+def select_incorrect_data(row, incorrect_sample_size, incorrect_data, replacement=False, reproducible=True, use_control_for_incorrects=False):
+    random_state = int(row['img_id']) if reproducible else None
+    current_filename = row['filename']
+    incorrect_sample = incorrect_data.loc[~incorrect_data.filename.isin([current_filename])].sample(
+        n=incorrect_sample_size, 
+        replace=replacement,
+        random_state=random_state
+    )
+    row['incorrect_group_filenames'] = incorrect_sample['filename'].values
 
-    Parameters
-    ----------
-    train_ds : Dataset, optional
-        The training dataset to be transformed.
-    valid_ds : Dataset, optional
-        The validation dataset to be transformed.
-    test_ds : Dataset, optional
-        The test dataset to be transformed.
-    preprocess_fn : callable
-        The preprocessing function to apply to the datasets.
-    step : str, optional
-        The step of the pipeline ('train' or 'eval'), by default 'train'.
-
-    Returns
-    -------
-    tuple
-        A tuple of datasets (train_ds, valid_ds, test_ds), depending on the step.
-    """
-    train_dataset, valid_dataset, test_dataset = None, None, None
-    
-    if step=='train':
-        train_dataset = train_ds.map(
-          preprocess_fn, batched=True, remove_columns=train_ds.column_names
-        )
-        valid_dataset = valid_ds.map(
-          preprocess_fn, batched=True, remove_columns=valid_ds.column_names
-        )
-        test_dataset = test_ds.map(
-          preprocess_fn, batched=True, remove_columns=test_ds.column_names
-        )
-    elif step=='eval':
-        train_dataset, valid_dataset = None, None
-        test_dataset = test_ds.map(
-          preprocess_fn, batched=True, remove_columns=test_ds.column_names
-        )
+    if use_control_for_incorrects:
+        row['incorrect_group_sentids'] = incorrect_sample['sentids'].values
+        row['incorrect_group'] = incorrect_sample['caption'].values
     else:
-        raise Exception("The parameters `step` needs to be equals to `train` or `eval`")
-        
-    return train_dataset, valid_dataset, test_dataset
+        row['incorrect_group_sentids'] = incorrect_sample['correct_group_sentids'].values
+        row['incorrect_group'] = incorrect_sample['correct_group'].values
+
+    return row
 
 
-def get_sample_and_remainder(original_list, sample_size):
-    """
-    Takes a random sample from a list and returns both the sample
-    and the remaining elements.
+def generate_grouped_dataset(dataset, correct_sample_size, incorrect_sample_size, reproducible=False, use_control_for_incorrects=False):
+    df = dataset.to_pandas()
 
-    Parameters
-    ----------
-        original_list (list): The list from which to sample.
-        sample_size (int): The number of elements to include in the sample.
+    if reproducible:
+        random.seed(correct_sample_size)
 
-    Returns
-    -------
-        tuple: A tuple containing two lists: (sample_list, remainder_list).
-    """
-    # Get the random sample
-    sample_list = random.sample(original_list, sample_size)
-
-    # Get the remaining elements using list comprehension
-    remainder_list = [item for item in original_list if item not in sample_list]
-
-    return sample_list, remainder_list
-
-
-def preprocess(
-    correct_sample_size,
-    incorrect_sample_size,
-    text_per_image,
-    image_column,
-    text_column
-    ):
-    """
-    Prepares and preprocesses images and captions for model input, adjusting image mode 
-    and duplicating entries as needed.
-
-    Parameters
-    ----------
-    question : str
-        The question prompt to accompany each caption, typically used in image captioning tasks.
-    text_per_image : int
-        Number of text captions per image. Used to duplicate images and filenames when 
-        multiple captions per image are needed.
-    image_column : str
-        The key in the input dictionary representing image data.
-    text_column : str
-        The key in the input dictionary representing text captions or answers.
-
-    Returns
-    -------
-    function
-        A function `map_item` that processes a batch of items.
-    """
-    def map_item(items):
-        """
-        Converts image data to RGB format, replicates captions and images based on 
-        `text_per_image`, and constructs a list of question prompts for each answer.
-
-        Parameters
-        ----------
-        items : dict
-            A dictionary containing image, text caption, and filename data.
-
-        Returns
-        -------
-        dict
-            A dictionary with processed data.
-        """
-        image_to_RGB = lambda img: img if img.mode == 'RGB' else img.convert('RGB') # CMYK (4 channels) is not accepted by the models
-
-        images = [image_to_RGB(img) for img in items[image_column]]
-        answers = items[text_column]
-        filenames = items['filename']
-        max_size = len(answers[0])
-
-        if correct_sample_size > max_size:
-            print(f"Sample size is larger than the original list size. Setting it to the original list size: {max_size}.")
-            correct_sample_size = max_size
-
-        if text_per_image > 1: # For Flickr30K (5 captions per image)
-            all_indices = [[i for i in range(len(sentences))] for sentences in answers]
-            correct_group_indices = [random.sample(indices, correct_sample_size) for indices in all_indices]
-            control_group_indices = [[item for item in indices if item not in idx_choice] for idx_choice, indices in zip(correct_group_indices, all_indices)]
-
-            correct_group = [[sentences[idx] for idx in correct_group_indices] for sentences in answers]
-            control_group = [[sentences[idx] for idx in control_group_indices] for sentences in answers]
-            # correct_group = [[sentences[idx] for idx in correct_group_indices] for sentences in answers for _ in range(max_size - correct_sample_size)]
-            # correct_group_indices = [idx for idx in correct_group_indices for _ in range(max_size - correct_sample_size)]
-            # control_group = [sentences[idx] for sentences, idxs in zip(answers, control_group_indices) for idx in idxs]
-            # control_group_indices = [idx for idxs in control_group_indices for idx in idxs]
-            # filenames = [filename for filename in filenames for _ in range(max_size - correct_sample_size)]
-            # images = [image for image in images for _ in range(max_size - correct_sample_size)]
-
-            filenames_indices = [i for i in range(len(filenames))]
-
-            for i in range(len(filenames)):
-                filenames_wo_1 = filenames_indices[:i] + filenames_indices[i+1:]
-                incorrect_filenames = random.sample(filenames_wo_1, incorrect_sample_size)
-                incorrect_group_indices = [(filenames[f], f, random.sample(all_indices[f], 1)) for f in incorrect_filenames]
-                incorrect_group = [answers[f][j] for filename, f, j in incorrect_group_indices]
-
-
-
-        return {
-            "filename": filenames,
-            "image": images,
-            "answers": answers,
-            "correct_group": correct_group,
-            "correct_group_indices": correct_group_indices,
-            "incorrect_group": incorrect_group,
-            "incorrect_group_indices": incorrect_group_indices,
-            "control_group": control_group,
-            "control_group_indices": control_group_indices
-        }
-
-    return map_item
+    df['correct_group_sentids'] = df['sentids'].progress_apply(lambda x: random.sample(x.tolist(), correct_sample_size))
+    df['correct_group'] = df.progress_apply(
+        lambda x: [
+            x['caption'].tolist()[i] for i in range(len(x['caption'])) if i in [int(sentid) % len(x['caption']) for sentid in x['correct_group_sentids']]
+        ],
+        axis=1
+    )
+    df['control_group_sentids'] = df.progress_apply(lambda x: [i for i in x['sentids'].tolist() if i not in x['correct_group_sentids']], axis=1)
+    df['control_group'] = df.progress_apply(
+        lambda x: [
+            x['caption'].tolist()[i] for i in range(len(x['caption'])) if i in [int(sentid) % len(x['caption']) for sentid in x['control_group_sentids']]
+        ],
+        axis=1
+    )
+    
+    incorrect_data = df.explode(['caption', 'sentids']) if use_control_for_incorrects else df.explode(['correct_group', 'correct_group_sentids'])
+    
+    df = df.progress_apply(
+        lambda row: select_incorrect_data(
+            row=row,
+            incorrect_sample_size=incorrect_sample_size,
+            incorrect_data=incorrect_data,
+            replacement=False
+        ),
+        axis=1
+    )
+    
+    features = Features({
+        'image': Image(mode=None, decode=True),
+        'caption': List(Value('string')),
+        'sentids': List(Value('int32')),
+        'split': Value('string'),
+        'img_id': Value('string'),
+        'filename': Value('string'),
+        'correct_group_sentids': List(Value('int32')),
+        'correct_group': List(Value('string')),
+        'control_group_sentids': List(Value('int32')),
+        'control_group': List(Value('string')),
+        'incorrect_group_filenames': List(Value('string')),
+        'incorrect_group_sentids': List(Value('int32')),
+        'incorrect_group': List(Value('string'))
+    })
+    
+    return Dataset.from_pandas(df, features=features)

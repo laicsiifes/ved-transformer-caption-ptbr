@@ -24,21 +24,20 @@ import time
 import yaml
 import pandas as pd
 
-from config.config import config_vars
+from utils.config import config_vars
 
-from data_prep.data_processing import (
+from utils.data_processing import (
     load_datasets,
-    preprocess,
-    transform_datasets
+    generate_grouped_dataset
 )
-from evaluation.eval_captions import evaluate_captions
+from utils.eval_captions import evaluate_captions
 
 from pprint import pprint
 from dotenv import load_dotenv
 from huggingface_hub import login
 
 
-def analyze(config, generate_args):
+def analyze(config):
     """
     Inference the model on a test dataset using the given configuration arguments.
 
@@ -66,27 +65,28 @@ def analyze(config, generate_args):
     print('\nDataset')
     print(f'\tTest: {len(test_ds)}\n')
 
-    # Prepare datasets to be used
-    train_dataset, valid_dataset, test_dataset = transform_datasets(
-        train_ds=train_ds,
-        valid_ds=valid_ds,
-        test_ds=test_ds,
-        preprocess_fn=preprocess(
-            sample_size=config["sample_size"],
-            question=config["question"],
-            text_per_image=config["text_per_image"],
-            image_column=config["image_column"],
-            text_column=config["text_column"],
-        ),
-        step='eval'
+    test_dataset = generate_grouped_dataset(
+        dataset=test_ds,
+        correct_sample_size=config["correct_sample_size"],
+        incorrect_sample_size=config["incorrect_sample_size"],
+        reproducible=False
     )
 
-    evaluate_predictions(
-        dataset=test_ds,
-        text_per_image=config["text_per_image"],
-        text_column=config["text_column"],
-        results_dir=config["results_dir"]
-    )
+    print("TEST DATASET")
+    print(test_dataset)
+    print("\nCONTROL GROUP")
+    print(test_dataset["control_group"])
+    print("\nCORRECT GROUP")
+    print(test_dataset["correct_group"])
+    print("\nINCORRECT GROUP")
+    print(test_dataset["incorrect_group"])
+
+    # evaluate_captions(
+    #     dataset=test_dataset,
+    #     text_per_image=config["text_per_image"],
+    #     text_column=config["text_column"],
+    #     results_dir=config["results_dir"]
+    # )
 
 
 if __name__ == "__main__":
@@ -97,7 +97,7 @@ if __name__ == "__main__":
     load_dotenv(dotenv_path="../.env")
     login(os.getenv("HF_API_KEY"))
 
-    with open('config.yml', 'r') as file:
+    with open('config.yaml', 'r') as file:
         setups = config_vars(yaml.safe_load(file))
 
     print('\nConfiguration:', end='\t')
