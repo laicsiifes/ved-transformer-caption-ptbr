@@ -56,6 +56,7 @@ except:
 else:
     print(f"AAC metrics is available, importing...")
 
+
 def compute_invidiual_metric(predictions, labels, scorer):
     result = {}
 
@@ -71,29 +72,28 @@ def compute_invidiual_metric(predictions, labels, scorer):
 
     # If there is a compute function, score the predictions 
     if compute:
-        with tqdm(total=len(predictions)) as pbar:
-            pbar.set_description(f"Eval. {scorer.name.upper()}")
+        # with tqdm(total=len(predictions)) as pbar:
+        #     pbar.set_description(f"Eval. {scorer.name.upper()}")
+        # Create an empty dict with empty lists to add the by-example scores
+        result = {
+            k:[] for k in list(compute([''], [''], scorer).keys())
+        }
 
-            # Create an empty dict with empty lists to add the by-example scores
-            result = {
-                k:[] for k in list(compute([''], [''], scorer).keys())
-            }
+        # Compute the score to each example
+        for prediction, label in zip(predictions, labels):
+            individual_result = compute([prediction], [label], scorer)
 
-            # Compute the score to each example
-            for prediction, label in zip(predictions, labels):
-                individual_result = compute([prediction], [label], scorer)
-
-                # Append the individual scores to the result dict
-                for key in individual_result:
-                    result[key].append(individual_result[key])
-                pbar.update(1)
+            # Append the individual scores to the result dict
+            for key in individual_result:
+                result[key].append(individual_result[key])
+            # pbar.update(1)
     else:
         print("`scorer` parameter is not set correctly, returning empty metric dict.")
         
     return result
 
 
-def compute_individual_metrics(predictions, labels, metrics, images_names, dataset):
+def compute_individual_metrics(control_group, target_group, metrics, images):
     """
     Calculate individual evaluation metrics for image captioning predictions.
 
@@ -116,22 +116,47 @@ def compute_individual_metrics(predictions, labels, metrics, images_names, datas
         A dictionary containing individual metric results for each image-caption pair.
     """
     # BERTScore and CLIPScore compute the metrics for each example by default
-    bertscore_result = compute_bert_scores(predictions, labels, metrics["bertscore"])
-    clipscore_result = compute_clip_scores(predictions, labels, dataset)
+    bertscore_result = compute_bert_scores(target_group, control_group, metrics["bertscore"])
+    clipscore_result = compute_clip_scores(target_group, control_group, images)
 
     # Computing example-by-example results for ROUGE, METEOR and BLEU
-    rouge_result  = compute_invidiual_metric(predictions, labels, metrics["rouge"])
-    meteor_result = compute_invidiual_metric(predictions, labels, metrics["meteor"])
-    bleu_result   = compute_invidiual_metric(predictions, labels, metrics["bleu"])
+    rouge_result  = compute_invidiual_metric(target_group, control_group, metrics["rouge"])
+    meteor_result = compute_invidiual_metric(target_group, control_group, metrics["meteor"])
+    bleu_result   = compute_invidiual_metric(target_group, control_group, metrics["bleu"])
 
     return {
-        "filename": images_names,
         **bertscore_result,
         **clipscore_result,
         **rouge_result,
         **meteor_result,
         **bleu_result
     }
+
+
+def compute_metrics_sample(metrics):
+    def map_item(item):
+        correct_group_metrics = compute_individual_metrics(
+            control_group=[item['control_group']]*len(item['correct_group']),
+            target_group=item['correct_group'],
+            metrics=metrics,
+            images=[item["image"]]*len(item['correct_group'])
+        )
+
+        incorrect_group_metrics = compute_individual_metrics(
+            control_group=[item['control_group']]*len(item['incorrect_group']),
+            target_group=item['incorrect_group'],
+            metrics=metrics,
+            images=[item["image"]]*len(item['incorrect_group'])
+        )
+
+        for metric in correct_group_metrics:
+            item[f'{metric}_correct'] = correct_group_metrics[metric]
+
+        for metric in incorrect_group_metrics:
+            item[f'{metric}_incorrect'] = incorrect_group_metrics[metric]
+
+        return item
+    return map_item
 
 
 def compute_all_metrics(dataset, text_per_image, text_column):
@@ -157,10 +182,6 @@ def compute_all_metrics(dataset, text_per_image, text_column):
     dict
         A dictionary with both individual and aggregated scores.
     """
-    images_names = dataset['filename']
-    control_group = dataset['control_group']
-    testing_group = dataset['testing_group']
-    
     evaluate.enable_progress_bar()
 
     metrics = {
@@ -178,49 +199,15 @@ def compute_all_metrics(dataset, text_per_image, text_column):
     else:
         print(f"CIDEr-D metric is available, importing...")
 
-    print("Computing Metrics Individually")
-    individual_metrics = compute_individual_metrics(
-        testing_group, control_group, metrics, images_names, dataset
+
+    return dataset.map(
+        compute_metrics_sample(metrics),
+        batched=False
     )
-
-    print("Computing Metrics Total")
-    original_metrics = {
-        "bertscore_precision": np.mean(individual_metrics["bertscore_precision"]),
-        "bertscore_recall": np.mean(individual_metrics["bertscore_recall"]),
-        "bertscore_f1": np.mean(individual_metrics["bertscore_f1"]),
-        "clipscore": np.mean(individual_metrics["clipscore"]),
-        "ref_clipscore": np.mean(individual_metrics["ref_clipscore"]),
-        **compute_rouge_scores(testing_group, control_group, metrics["rouge"]),
-        **compute_bleu_scores(testing_group, control_group, metrics["bleu"]),
-        **compute_meteor_scores(testing_group, control_group, metrics["meteor"]),
-        **compute_cider_scores(
-            [re.sub(r"\\.", "", s.encode('unicode_escape').decode()) for s in testing_group],
-            [[re.sub(r"\\.", "", s.encode('unicode_escape').decode()) for s in label ] for label in control_group],
-            metrics["cider"]
-        )
-    }
-
-    sample_metrics = {}
-
-    print("Computing Metrics Mean/Std")
-    for metric in [
-        "bertscore_precision", "bertscore_recall", "bertscore_f1",
-        "clipscore", "ref_clipscore",
-        "rouge1", "rouge2", "rougeL", "rougeLsum", "bleu", "meteor"
-    ]:  
-        sample_metrics[f"{metric}_mean"] = round(np.mean(individual_metrics[metric]) * 100, 4)
-        sample_metrics[f"{metric}_std"] = round(np.std(individual_metrics[metric]) * 100, 4)
-
-    return {
-        "individual_metrics": individual_metrics,
-        "original_metrics": original_metrics,
-        "sample_metrics": sample_metrics
-    }
 
 
 def evaluate_captions(
         dataset,
-        predictions,
         text_per_image,
         text_column,
         results_dir
@@ -258,17 +245,7 @@ def evaluate_captions(
         text_column=text_column
     )
 
-    pd.DataFrame(results["individual_metrics"]).to_csv(
-        path_or_buf=os.path.join(results_dir, f'individual_eval_metrics.csv'),
-        index=False
-    )
-
-    pd.DataFrame(results["original_metrics"], index=[0]).to_csv(
-        path_or_buf=os.path.join(results_dir, f'original_eval_metrics.csv'),
-        index=False
-    )
-
-    pd.DataFrame(results["sample_metrics"], index=[0]).to_csv(
-        path_or_buf=os.path.join(results_dir, f'sample_eval_metrics.csv'),
+    pd.DataFrame(results).to_csv(
+        path_or_buf=os.path.join(results_dir, f'results.csv'),
         index=False
     )

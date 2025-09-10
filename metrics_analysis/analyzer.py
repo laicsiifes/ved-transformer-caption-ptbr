@@ -72,21 +72,24 @@ def analyze(config):
         reproducible=False
     )
 
-    print("TEST DATASET")
-    print(test_dataset)
-    print("\nCONTROL GROUP")
-    print(test_dataset["control_group"])
-    print("\nCORRECT GROUP")
-    print(test_dataset["correct_group"])
-    print("\nINCORRECT GROUP")
-    print(test_dataset["incorrect_group"])
+    # print("TEST DATASET")
+    # print(test_dataset)
+    # print("\nCONTROL GROUP")
+    # print(test_dataset["control_group"])
+    # print("\nCORRECT GROUP")
+    # print(test_dataset["correct_group"])
+    # print("\nINCORRECT GROUP")
+    # print(test_dataset["incorrect_group"])
 
-    # evaluate_captions(
-    #     dataset=test_dataset,
-    #     text_per_image=config["text_per_image"],
-    #     text_column=config["text_column"],
-    #     results_dir=config["results_dir"]
-    # )
+    print('\nDataset')
+    print(f'\tTest: {len(test_ds)}\n')
+
+    evaluate_captions(
+        dataset=test_dataset,
+        text_per_image=config["text_per_image"],
+        text_column=config["text_column"],
+        results_dir=config["results_dir"]
+    )
 
 
 if __name__ == "__main__":

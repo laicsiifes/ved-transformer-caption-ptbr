@@ -86,7 +86,7 @@ def compute_cider_scores(predictions, labels, scorer):
 def compute_bert_scores(predictions, labels, bertscore):
     results = {}
     
-    print("Eval. BERTScore")
+    # print("Eval. BERTScore")
     bertscore_result = bertscore.compute(
         predictions=[' '.join(prediction.split()[:200]) for prediction in predictions],
         references=[[' '.join(unit.split()[:200]) for unit in label] for label in labels],
@@ -182,7 +182,7 @@ def ref_clip_score(image_score, text_scores):
     return 2 * (image_score * text_score) / (image_score + text_score)
 
 
-def compute_clip_scores(predictions, labels, dataset):
+def compute_clip_scores(predictions, labels, images):
     """
     Compute CLIP-based similarity scores (CLIPScore and RefCLIPScore) for image-caption pairs.
 
@@ -192,7 +192,7 @@ def compute_clip_scores(predictions, labels, dataset):
         A list of predicted captions.
     labels : list of list of str
         A list of lists, where each sublist contains reference captions for each image.
-    dataset : Dataset
+    images : images
         A list of images corresponding to each prediction.
 
     Returns
@@ -210,31 +210,31 @@ def compute_clip_scores(predictions, labels, dataset):
         'ref_clipscore': []
     }
     
-    with tqdm(total=len(predictions)) as pbar:
-        for prediction, label, batch in zip(predictions, labels, dataset):
-            pbar.set_description("Eval. CLIPScore")
-            img_score = clip_score(
-                reference=batch["image"],
+    # with tqdm(total=len(predictions)) as pbar:
+    for prediction, label, image in zip(predictions, labels, images):
+        # pbar.set_description("Eval. CLIPScore")
+        img_score = clip_score(
+            reference=image,
+            candidate=prediction,
+            kind='img-txt',
+            tokenizer=tokenizer,
+            preprocess=preprocess,
+            model=model
+        )
+        txt_scores = [
+            clip_score(
+                reference=reference,
                 candidate=prediction,
-                kind='img-txt',
+                kind='txt-txt',
                 tokenizer=tokenizer,
                 preprocess=preprocess,
                 model=model
-            )
-            txt_scores = [
-                clip_score(
-                    reference=reference,
-                    candidate=prediction,
-                    kind='txt-txt',
-                    tokenizer=tokenizer,
-                    preprocess=preprocess,
-                    model=model
-                ) for reference in label
-            ]
-            score = ref_clip_score(img_score, txt_scores)
-            scores['clipscore'].append(img_score)
-            scores['ref_clipscore'].append(score)
-            pbar.update(1)
+            ) for reference in label
+        ]
+        score = ref_clip_score(img_score, txt_scores)
+        scores['clipscore'].append(img_score)
+        scores['ref_clipscore'].append(score)
+        # pbar.update(1)
 
     del model
     gc.collect()

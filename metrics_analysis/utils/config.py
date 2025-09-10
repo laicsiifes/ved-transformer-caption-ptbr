@@ -47,7 +47,7 @@ def config_vars(setups):
     correct_sample_size = setups["config"]["correct_sample_size"]
     incorrect_sample_size = setups["config"]["incorrect_sample_size"]
 
-    setups["config"]["results_dir"] = f"../results/{dataset_name}/{correct_sample_size}_vs_{incorrect_sample_size}"
+    setups["config"]["results_dir"] = f"results/{dataset_name}/{correct_sample_size}_vs_{incorrect_sample_size}"
     setups["config"]["hf_dataset"] = setups["dataset"][dataset_name]["id"]
     setups["config"]["hf_test_set"] = setups["dataset"][dataset_name]["id"]
     setups["config"]["image_column"] = setups["dataset"][dataset_name]["image_column"]
