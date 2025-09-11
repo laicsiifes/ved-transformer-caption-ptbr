@@ -56,5 +56,6 @@ def config_vars(setups):
     setups["config"]["turn_off_computer"] = setups["config"]["turn_off_computer"]
     setups["config"]["data_dir"] = os.path.join("../data", dataset_name)
     setups["config"]["test_data_dir"] = os.path.join("../data", dataset_name)
+    setups["config"]["cpu_cores"] = str(setups["config"]["cpu_cores"])
 
     return setups

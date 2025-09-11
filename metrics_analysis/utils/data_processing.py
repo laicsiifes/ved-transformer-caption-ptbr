@@ -76,15 +76,15 @@ def load_datasets(data_dir, step='train', hf_dataset=None, dataset_from_hub=Fals
         dataset = load_dataset(hf_dataset)
 
     if step=='train':
-        train_ds = dataset['train'].select(range(5)) if dataset_from_hub \
+        train_ds = dataset['train'] if dataset_from_hub \
              else load_from_disk(os.path.join(data_dir, 'train.hf'))
-        valid_ds = dataset['validation'].select(range(5)) if dataset_from_hub \
+        valid_ds = dataset['validation'] if dataset_from_hub \
              else load_from_disk(os.path.join(data_dir, 'validation.hf'))
-        test_ds = dataset['test'].select(range(5)) if dataset_from_hub \
+        test_ds = dataset['test'] if dataset_from_hub \
              else load_from_disk(os.path.join(data_dir, 'test.hf'))
     elif step=='eval':
         train_ds, valid_ds = None, None
-        test_ds = dataset['test'].select(range(5)) if dataset_from_hub \
+        test_ds = dataset['test'] if dataset_from_hub \
              else load_from_disk(os.path.join(data_dir, 'test.hf'))
     else:
         raise Exception("The parameters `step` needs to be equals to `train` or `eval`")
@@ -118,14 +118,25 @@ def generate_grouped_dataset(dataset, correct_sample_size, incorrect_sample_size
     if reproducible:
         random.seed(correct_sample_size)
 
-    df['correct_group_sentids'] = df['sentids'].progress_apply(lambda x: random.sample(x.tolist(), correct_sample_size))
+    print("\nCorrect group IDs")
+    df['correct_group_sentids'] = df['sentids'].progress_apply(
+        lambda x: random.sample(x.tolist(), correct_sample_size)
+    )
+
+    print("\nCorrect group captions")
     df['correct_group'] = df.progress_apply(
         lambda x: [
             x['caption'].tolist()[i] for i in range(len(x['caption'])) if i in [int(sentid) % len(x['caption']) for sentid in x['correct_group_sentids']]
         ],
         axis=1
     )
-    df['control_group_sentids'] = df.progress_apply(lambda x: [i for i in x['sentids'].tolist() if i not in x['correct_group_sentids']], axis=1)
+    print("\nControl group IDs")
+    df['control_group_sentids'] = df.progress_apply(
+        lambda x: [i for i in x['sentids'].tolist() if i not in x['correct_group_sentids']],
+        axis=1
+    )
+
+    print("\nControl group captions")
     df['control_group'] = df.progress_apply(
         lambda x: [
             x['caption'].tolist()[i] for i in range(len(x['caption'])) if i in [int(sentid) % len(x['caption']) for sentid in x['control_group_sentids']]
@@ -135,6 +146,7 @@ def generate_grouped_dataset(dataset, correct_sample_size, incorrect_sample_size
     
     incorrect_data = df.explode(['caption', 'sentids']) if use_control_for_incorrects else df.explode(['correct_group', 'correct_group_sentids'])
     
+    print("\nIncorrect group IDs and captions")
     df = df.progress_apply(
         lambda row: select_incorrect_data(
             row=row,

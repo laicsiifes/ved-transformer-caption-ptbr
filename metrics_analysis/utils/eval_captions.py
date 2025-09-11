@@ -159,7 +159,7 @@ def compute_metrics_sample(metrics):
     return map_item
 
 
-def compute_all_metrics(dataset, text_per_image, text_column):
+def compute_all_metrics(dataset, text_per_image, text_column, cpu_cores):
     """
     Evaluate and compute various metrics for image captioning predictions, including BERTScore, 
     CLIPScore, ROUGE, BLEU, and METEOR, with both individual and aggregated scores.
@@ -199,10 +199,11 @@ def compute_all_metrics(dataset, text_per_image, text_column):
     else:
         print(f"CIDEr-D metric is available, importing...")
 
-
+    print("\nProcessing Metrics")
     return dataset.map(
         compute_metrics_sample(metrics),
-        batched=False
+        batched=False,
+        num_proc=int(os.cpu_count() * eval(str(cpu_cores))) if cpu_cores != "None" else None
     )
 
 
@@ -210,7 +211,8 @@ def evaluate_captions(
         dataset,
         text_per_image,
         text_column,
-        results_dir
+        results_dir,
+        cpu_cores="0.5"
     ):
     """
     Generate evaluation results for a model, saving metrics and training history to CSV files.
@@ -242,7 +244,8 @@ def evaluate_captions(
     results = compute_all_metrics(
         dataset=dataset,
         text_per_image=text_per_image,
-        text_column=text_column
+        text_column=text_column,
+        cpu_cores=cpu_cores
     )
 
     pd.DataFrame(results).to_csv(
