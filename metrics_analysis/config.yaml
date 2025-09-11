@@ -9,11 +9,11 @@ config:
 
   # size of the samples for correct and incorrect
   correct_sample_size: 2 # The maximum is 5 (5 captions), sample_size is the number N between 1 and 5, to select N captions among the 5 originals
-  incorrect_sample_size: 10 # The maximum is 4995, the captions that are not part of the 5 ground-truth captions
+  incorrect_sample_size: 2 # The maximum is 4995, the captions that are not part of the 5 ground-truth captions
   use_control_as_incorrect: False
 
   # percent of CPU cores to use in metrics processing, can be fraction (e.g., "1/2") or not (e.g., "0.5") 
-  cpu_cores: "1/3" # Default "None"
+  cpu_cores: "None" # Default "None"
 
   # dataset from hub
   dataset_from_hub: True
