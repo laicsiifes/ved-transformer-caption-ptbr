@@ -4,8 +4,7 @@
 
 config:
   # dataset for training and evaluation
-  dataset: "flickr30k_pt_human_generated"
-  # dataset: "flickr30k_pt"
+  dataset: "both"
 
   # size of the samples for correct and incorrect
   correct_sample_size: 2 # The maximum is 5 (5 captions), sample_size is the number N between 1 and 5, to select N captions among the 5 originals
@@ -28,7 +27,7 @@ config:
 
 dataset:
   # Flickr30K randomly sampled with 5k
-  flickr30k_pt:
+  flickr_translated:
     id: "laicsiifes/flickr30k-pt-br-5k"
     max_length: 25
     image_column: "image"
@@ -36,25 +35,9 @@ dataset:
     text_per_image: 5
 
   # Flickr30K randomly sampled with 5k with the human generated captions of FM30K
-  flickr30k_pt_human_generated:
+  flickr_native:
     id: "laicsiifes/flickr30k-pt-br-5k-human-generated"
     max_length: 25
     image_column: "image"
     text_column: "caption"
     text_per_image: 5
-
-  # Flickr30K randomly sampled with 5k with the human translated captions of FM30K
-  flickr30k_pt_human_translated:
-    id: "laicsiifes/flickr30k-pt-br-human-translated"
-    max_length: 25
-    image_column: "image"
-    text_column: "caption"
-    text_per_image: 5
-
-  # PraCegoVer randomly sampled with 5k (unavailable)
-  pracegover_63k:
-    id: "laicsiifes/pracegover63k-5k"
-    max_length: 70
-    image_column: "image"
-    text_column: "text"
-    text_per_image: 1

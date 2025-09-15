@@ -47,15 +47,29 @@ def config_vars(setups):
     correct_sample_size = setups["config"]["correct_sample_size"]
     incorrect_sample_size = setups["config"]["incorrect_sample_size"]
 
-    setups["config"]["results_dir"] = f"results/{dataset_name}/{correct_sample_size}_vs_{incorrect_sample_size}"
-    setups["config"]["hf_dataset"] = setups["dataset"][dataset_name]["id"]
-    setups["config"]["hf_test_set"] = setups["dataset"][dataset_name]["id"]
-    setups["config"]["image_column"] = setups["dataset"][dataset_name]["image_column"]
-    setups["config"]["text_column"] = setups["dataset"][dataset_name]["text_column"]
-    setups["config"]["text_per_image"] = setups["dataset"][dataset_name]["text_per_image"]
-    setups["config"]["turn_off_computer"] = setups["config"]["turn_off_computer"]
-    setups["config"]["data_dir"] = os.path.join("../data", dataset_name)
-    setups["config"]["test_data_dir"] = os.path.join("../data", dataset_name)
-    setups["config"]["cpu_cores"] = str(setups["config"]["cpu_cores"])
+    if dataset_name == 'both':
+        available_datasets = {ds:setups["dataset"][ds]["id"] for ds in setups["dataset"]}
+        setups["config"]["hf_dataset"] = available_datasets
+        setups["config"]["hf_test_set"] = available_datasets
+
+        setups["config"]["results_dir"] = f"results/both/{correct_sample_size}_vs_{incorrect_sample_size}"
+        setups["config"]["image_column"] = "image"
+        setups["config"]["text_column"] = "caption"
+        setups["config"]["text_per_image"] = 5
+        setups["config"]["turn_off_computer"] = setups["config"]["turn_off_computer"]
+        setups["config"]["data_dir"] = os.path.join("../data", "both")
+        setups["config"]["test_data_dir"] = os.path.join("../data", "both")
+        setups["config"]["cpu_cores"] = str(setups["config"]["cpu_cores"])
+    else:
+        setups["config"]["results_dir"] = f"results/{dataset_name}/{correct_sample_size}_vs_{incorrect_sample_size}"
+        setups["config"]["hf_dataset"] = setups["dataset"][dataset_name]["id"]
+        setups["config"]["hf_test_set"] = setups["dataset"][dataset_name]["id"]
+        setups["config"]["image_column"] = setups["dataset"][dataset_name]["image_column"]
+        setups["config"]["text_column"] = setups["dataset"][dataset_name]["text_column"]
+        setups["config"]["text_per_image"] = setups["dataset"][dataset_name]["text_per_image"]
+        setups["config"]["turn_off_computer"] = setups["config"]["turn_off_computer"]
+        setups["config"]["data_dir"] = os.path.join("../data", dataset_name)
+        setups["config"]["test_data_dir"] = os.path.join("../data", dataset_name)
+        setups["config"]["cpu_cores"] = str(setups["config"]["cpu_cores"])
 
     return setups

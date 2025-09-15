@@ -52,7 +52,6 @@ def analyze(config):
     -------
     None
         Writes the evaluation metrics to a CSV file in the specified results directory.
-
     """
     # Load datasets from HuggingFace Hub
     _, _, test_ds = load_datasets(
@@ -73,7 +72,7 @@ def analyze(config):
     )
 
     print('\nDataset')
-    print(f'\tTest: {len(test_ds)}\n')
+    print(f'\tTest: {len(ds_native)}\n')
     print('\nEvaluation Info')
     print(f'\tDataset: {config["hf_dataset"]}')
     print(f'\tProportion: {config["correct_sample_size"]} corrects vs. {config["incorrect_sample_size"]} incorrects\n')

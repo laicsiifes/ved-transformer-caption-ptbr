@@ -44,6 +44,35 @@ from tqdm import tqdm
 tqdm.pandas()
 
 
+def join_datasets(ds_native, ds_translated):
+    df_native = ds_native.to_pandas().rename(columns={'caption': 'caption_native'})
+    df_translated = ds_translated.to_pandas().rename(columns={'caption': 'caption_translated'})
+
+    df = df_native.set_index('filename').join(
+        other=df_translated[['filename', 'caption_translated']].set_index('filename'),
+        how='inner'
+    ).reset_index()
+
+    df['caption'] = df['caption_native'] + df['caption_translated']
+
+    df = df.drop(columns=['caption_native', 'caption_translated'])
+
+    features = Features({
+        'image': Image(mode=None, decode=True),
+        'caption': List(Value('string')),
+        'sentids': List(Value('int32')),
+        'split': Value('string'),
+        'img_id': Value('string'),
+        'filename': Value('string'),
+        'correct_group': List(Value('string')),
+        'control_group': List(Value('string')),
+        'incorrect_group_filenames': List(Value('string')),
+        'incorrect_group': List(Value('string'))
+    })
+
+    return Dataset.from_pandas(df, features=features)
+
+
 def load_datasets(data_dir, step='train', hf_dataset=None, dataset_from_hub=False):
     """
     Load training, validation, and test datasets from either local storage or the Hugging Face Hub.
@@ -103,16 +132,66 @@ def select_incorrect_data(row, incorrect_sample_size, incorrect_data, replacemen
     row['incorrect_group_filenames'] = incorrect_sample['filename'].values
 
     if use_control_for_incorrects:
-        row['incorrect_group_sentids'] = incorrect_sample['sentids'].values
         row['incorrect_group'] = incorrect_sample['caption'].values
     else:
-        row['incorrect_group_sentids'] = incorrect_sample['correct_group_sentids'].values
         row['incorrect_group'] = incorrect_sample['correct_group'].values
 
     return row
 
 
-def generate_grouped_dataset(dataset, correct_sample_size, incorrect_sample_size, reproducible=False, use_control_for_incorrects=False):
+def generate_grouped_dataset(
+        dataset_native,
+        dataset_translated,
+        correct_sample_size,
+        incorrect_sample_size,
+        reproducible=False,
+        use_control_for_incorrects=False
+    ):
+    df = join_dataset(dataset_native, dataset_translated)
+
+    if reproducible:
+        random.seed(correct_sample_size)
+
+    for index, row in df.iterrows():
+
+        positive_ids = random.sample([i for i in range(10)], correct_sample_size)
+        control_ids = [i for i in [i for i in range(10)] if i not in positive_ids]
+
+        captions = df.loc[index, 'caption'].tolist()
+
+        df.loc[index, 'correct_group'] = [captions[i] for i in positive_ids]
+        df.loc[index, 'control_group'] = [captions[i] for i in control_ids]
+    
+    incorrect_data = df.explode(['caption']) if use_control_for_incorrects else df.explode(['correct_group'])
+    
+    print("\nIncorrect group IDs and captions")
+    df = df.progress_apply(
+        lambda row: select_incorrect_data(
+            row=row,
+            incorrect_sample_size=incorrect_sample_size,
+            incorrect_data=incorrect_data,
+            replacement=False
+        ),
+        axis=1
+    )
+    
+    features = Features({
+        'image': Image(mode=None, decode=True),
+        'caption': List(Value('string')),
+        'sentids': List(Value('int32')),
+        'split': Value('string'),
+        'img_id': Value('string'),
+        'filename': Value('string'),
+        'correct_group': List(Value('string')),
+        'control_group': List(Value('string')),
+        'incorrect_group_filenames': List(Value('string')),
+        'incorrect_group': List(Value('string'))
+    })
+    
+    return Dataset.from_pandas(df, features=features)
+
+
+def generate_grouped_dataset_(dataset, correct_sample_size, incorrect_sample_size, reproducible=False, use_control_for_incorrects=False):
     df = dataset.to_pandas()
 
     if reproducible:
