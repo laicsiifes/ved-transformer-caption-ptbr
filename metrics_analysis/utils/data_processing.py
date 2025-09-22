@@ -44,36 +44,42 @@ from tqdm import tqdm
 tqdm.pandas()
 
 
-def join_datasets(ds_native, ds_translated):
-    df_native = ds_native.to_pandas().rename(columns={'caption': 'caption_native'})
-    df_translated = ds_translated.to_pandas().rename(columns={'caption': 'caption_translated'})
+def join_datasets(ds_native, ds_translated, dataset):
+    df = None
+    if dataset:
+        df = dataset.to_pandas()
+    else:
+        df_native = ds_native.to_pandas().rename(columns={'caption': 'caption_native'})
+        df_translated = ds_translated.to_pandas().rename(columns={'caption': 'caption_translated'})
 
-    df = df_native.set_index('filename').join(
-        other=df_translated[['filename', 'caption_translated']].set_index('filename'),
-        how='inner'
-    ).reset_index()
+        df = df_native.set_index('filename').join(
+            other=df_translated[['filename', 'caption_translated']].set_index('filename'),
+            how='inner'
+        ).reset_index()
 
-    df['caption'] = df['caption_native'] + df['caption_translated']
+        df['caption'] = df['caption_native'] + df['caption_translated']
 
-    df = df.drop(columns=['caption_native', 'caption_translated'])
+        df = df.drop(columns=['caption_native', 'caption_translated'])
 
-    features = Features({
-        'image': Image(mode=None, decode=True),
-        'caption': List(Value('string')),
-        'sentids': List(Value('int32')),
-        'split': Value('string'),
-        'img_id': Value('string'),
-        'filename': Value('string'),
-        'correct_group': List(Value('string')),
-        'control_group': List(Value('string')),
-        'incorrect_group_filenames': List(Value('string')),
-        'incorrect_group': List(Value('string'))
-    })
+    return df
 
-    return Dataset.from_pandas(df, features=features)
+    # features = Features({
+    #     'image': Image(mode=None, decode=True),
+    #     'caption': List(Value('string')),
+    #     'sentids': List(Value('int32')),
+    #     'split': Value('string'),
+    #     'img_id': Value('string'),
+    #     'filename': Value('string'),
+    #     'correct_group': List(Value('string')),
+    #     'control_group': List(Value('string')),
+    #     'incorrect_group_filenames': List(Value('string')),
+    #     'incorrect_group': List(Value('string'))
+    # })
+
+    # return Dataset.from_pandas(df, features=features)
 
 
-def load_datasets(data_dir, step='train', hf_dataset=None, dataset_from_hub=False):
+def load_datasets(data_dir, step='train', hf_dataset=None):
     """
     Load training, validation, and test datasets from either local storage or the Hugging Face Hub.
 
@@ -99,26 +105,15 @@ def load_datasets(data_dir, step='train', hf_dataset=None, dataset_from_hub=Fals
     Exception
         If `step` is not set to 'train' or 'eval'.
     """
-    train_ds, valid_ds, test_ds = None, None, None
+    dataset_native, dataset_translated, dataset = None, None, None
 
-    if dataset_from_hub:
-        dataset = load_dataset(hf_dataset)
-
-    if step=='train':
-        train_ds = dataset['train'] if dataset_from_hub \
-             else load_from_disk(os.path.join(data_dir, 'train.hf'))
-        valid_ds = dataset['validation'] if dataset_from_hub \
-             else load_from_disk(os.path.join(data_dir, 'validation.hf'))
-        test_ds = dataset['test'] if dataset_from_hub \
-             else load_from_disk(os.path.join(data_dir, 'test.hf'))
-    elif step=='eval':
-        train_ds, valid_ds = None, None
-        test_ds = dataset['test'] if dataset_from_hub \
-             else load_from_disk(os.path.join(data_dir, 'test.hf'))
+    if isinstance(hf_dataset, dict):
+        dataset_native = load_dataset(hf_dataset["dataset_native"])
+        dataset_translated = load_dataset(hf_dataset["dataset_translated"])
     else:
-        raise Exception("The parameters `step` needs to be equals to `train` or `eval`")
+        dataset = load_dataset(hf_dataset)
     
-    return train_ds, valid_ds, test_ds
+    return dataset_native['test'], dataset_translated['test'], dataset['test']
 
 
 def select_incorrect_data(row, incorrect_sample_size, incorrect_data, replacement=False, reproducible=True, use_control_for_incorrects=False):
@@ -142,12 +137,13 @@ def select_incorrect_data(row, incorrect_sample_size, incorrect_data, replacemen
 def generate_grouped_dataset(
         dataset_native,
         dataset_translated,
+        dataset,
         correct_sample_size,
         incorrect_sample_size,
         reproducible=False,
         use_control_for_incorrects=False
     ):
-    df = join_dataset(dataset_native, dataset_translated)
+    df = join_dataset(dataset_native, dataset_translated, dataset)
 
     if reproducible:
         random.seed(correct_sample_size)

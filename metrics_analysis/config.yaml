@@ -27,7 +27,7 @@ config:
 
 dataset:
   # Flickr30K randomly sampled with 5k
-  flickr_translated:
+  dataset_translated:
     id: "laicsiifes/flickr30k-pt-br-5k"
     max_length: 25
     image_column: "image"
@@ -35,7 +35,7 @@ dataset:
     text_per_image: 5
 
   # Flickr30K randomly sampled with 5k with the human generated captions of FM30K
-  flickr_native:
+  dataset_native:
     id: "laicsiifes/flickr30k-pt-br-5k-human-generated"
     max_length: 25
     image_column: "image"
