@@ -108,12 +108,12 @@ def load_datasets(data_dir, step='train', hf_dataset=None):
     dataset_native, dataset_translated, dataset = None, None, None
 
     if isinstance(hf_dataset, dict):
-        dataset_native = load_dataset(hf_dataset["dataset_native"])
-        dataset_translated = load_dataset(hf_dataset["dataset_translated"])
+        dataset_native = load_dataset(hf_dataset["dataset_native"])['test']
+        dataset_translated = load_dataset(hf_dataset["dataset_translated"])['test']
     else:
-        dataset = load_dataset(hf_dataset)
+        dataset = load_dataset(hf_dataset)['test']
     
-    return dataset_native['test'], dataset_translated['test'], dataset['test']
+    return dataset_native, dataset_translated, dataset
 
 
 def select_incorrect_data(row, incorrect_sample_size, incorrect_data, replacement=False, reproducible=True, use_control_for_incorrects=False):
