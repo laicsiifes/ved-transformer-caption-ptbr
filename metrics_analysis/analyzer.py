@@ -57,8 +57,7 @@ def analyze(config):
     dataset_native, dataset_translated, dataset = load_datasets(
         data_dir=config["test_data_dir"],
         step='eval',
-        hf_dataset=config["hf_dataset"],
-        dataset_from_hub=config["dataset_from_hub"]
+        hf_dataset=config["hf_dataset"]
     )
 
     print('\nDataset')
