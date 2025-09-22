@@ -4,7 +4,7 @@
 
 config:
   # dataset for training and evaluation
-  dataset: "both"
+  dataset: "both" # "dataset_translated", "dataset_native", "both"
 
   # size of the samples for correct and incorrect
   correct_sample_size: 2 # The maximum is 5 (5 captions), sample_size is the number N between 1 and 5, to select N captions among the 5 originals

@@ -60,9 +60,6 @@ def analyze(config):
         hf_dataset=config["hf_dataset"]
     )
 
-    print('\nDataset')
-    print(f'\tTest: {len(test_ds)}\n')
-
     test_dataset = generate_grouped_dataset(
         dataset_native=dataset_native,
         dataset_translated=dataset_translated,
