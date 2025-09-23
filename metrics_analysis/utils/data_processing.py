@@ -36,6 +36,7 @@ import os
 import base64
 import random
 import numpy as np
+import pandas as pd
 
 from pprint import pprint
 from io import BytesIO
@@ -50,14 +51,6 @@ def join_datasets(ds_native, ds_translated, dataset):
     if dataset:
         df = dataset.to_pandas()
     else:
-        def join_lists(row):
-            row['caption'] = [
-                cap for cap in row['caption_native']
-            ].extend(
-                cap for cap in row['caption_translated']
-            )
-            return row
-
         df_native = ds_native.to_pandas().rename(columns={'caption': 'caption_native'})
         df_translated = ds_translated.to_pandas().rename(columns={'caption': 'caption_translated'})
 
@@ -66,26 +59,15 @@ def join_datasets(ds_native, ds_translated, dataset):
             how='inner'
         ).reset_index()
 
-        df = df.progress_apply(lambda x: join_lists(x), axis=1)
+        # df = df.progress_apply(lambda x: join_lists(x), axis=1)
+        df['caption'] = df.apply(
+            lambda row: row['caption_native'].tolist() + row['caption_translated'].tolist(),
+            axis=1
+        )
 
         df = df.drop(columns=['caption_native', 'caption_translated'])
 
     return df
-
-    # features = Features({
-    #     'image': Image(mode=None, decode=True),
-    #     'caption': List(Value('string')),
-    #     'sentids': List(Value('int32')),
-    #     'split': Value('string'),
-    #     'img_id': Value('string'),
-    #     'filename': Value('string'),
-    #     'correct_group': List(Value('string')),
-    #     'control_group': List(Value('string')),
-    #     'incorrect_group_filenames': List(Value('string')),
-    #     'incorrect_group': List(Value('string'))
-    # })
-
-    # return Dataset.from_pandas(df, features=features)
 
 
 def load_datasets(data_dir, step='train', hf_dataset=None):
@@ -133,18 +115,18 @@ def select_incorrect_data(row, incorrect_sample_size, incorrect_data, replacemen
         replace=replacement,
         random_state=random_state
     )
-    row['incorrect_group_filenames'] = incorrect_sample['filename'].values
+    row['incorrect_group_filenames'] = incorrect_sample['filename'].values.tolist()
 
     if use_control_for_incorrects:
-        row['incorrect_group'] = incorrect_sample['caption'].values
+        row['incorrect_group'] = incorrect_sample['caption'].values.tolist()
     else:
-        row['incorrect_group'] = incorrect_sample['correct_group'].values
+        row['incorrect_group'] = incorrect_sample['correct_group'].values.tolist()
 
     return row
 
 
 def select_correct_data(row, correct_sample_size):
-    row['correct_group'] = random.sample(row['caption'].values.tolist(), correct_sample_size)
+    row['correct_group'] = random.sample(row['caption'], correct_sample_size)
     row['control_group'] = [cap for cap in row['caption'] if cap not in row['correct_group']]
     return row
 
@@ -157,43 +139,23 @@ def generate_grouped_dataset(
         reproducible=False,
         use_control_for_incorrects=False
     ):
+    pd.set_option('display.max_columns', None)
     df = join_datasets(dataset_native, dataset_translated, dataset)
 
-    # df['control_group'] = [[]] * len(df)
-    # df['correct_group'] = [[]] * len(df)
-    # df['incorrect_group'] = [[]] * len(df)
-
-    print(df.columns)
-    print(df.caption[0])
+    print('\n', 'Source Dataset')
+    print('\t', df.info())
+    print('\t', df[['filename', 'caption']].head())
+    print('\t', df.caption[0], '\n')
 
     if reproducible:
         random.seed(correct_sample_size)
-
-    # for index, row in df.iterrows():
-    #     captions = row['caption'].tolist()
-
-    #     row['correct_group'].extend(random.sample(captions, correct_sample_size))
-    #     row['control_group'].extend([cap for cap in captions if cap not in df.loc[index, 'correct_group']])
-
-    #     df.loc[index, :] = row
-        # captions = df.loc[index, 'caption'].tolist()
-
-        # df.loc[index, 'correct_group'].extend(random.sample(captions, correct_sample_size))
-        # df.loc[index, 'control_group'].extend([cap for cap in captions if cap not in df.loc[index, 'correct_group']])
-
-        # positive_ids = random.sample([i for i in range(cap_len)], correct_sample_size)
-        # control_ids = [i for i in [i for i in range(cap_len)] if i not in positive_ids]
-        # print(positive_ids)
-        # print(control_ids)
-
-        # df.loc[index, 'correct_group'] = [captions[i] for i in positive_ids]
-        # df.loc[index, 'control_group'] = [captions[i] for i in control_ids]
     
     df = df.progress_apply(lambda row: select_correct_data(row=row, correct_sample_size=correct_sample_size), axis=1)
 
-    print(df.info())
-    print(type(df.caption.values[0].tolist()))
-    print(df[['filename', 'caption', 'control_group', 'correct_group', 'incorrect_group']])
+    print('\n', 'Correct/Control Columns')
+    print('\t', df.info())
+    print('\t', df[['filename', 'caption', 'control_group', 'correct_group']].head())
+    print('\t', df.caption[0], '\n')
 
     incorrect_data = df.explode(['caption']) if use_control_for_incorrects else df.explode(['correct_group'])
     
@@ -208,6 +170,11 @@ def generate_grouped_dataset(
         axis=1
     )
     
+    print('\n', 'Incorrect/Correct/Control Columns')
+    print('\t', df.info())
+    print('\t', df[['filename', 'caption', 'control_group', 'correct_group', 'incorrect_group', 'incorrect_group_filenames']].head())
+    print('\t', df.caption[0], '\n')
+
     features = Features({
         'image': Image(mode=None, decode=True),
         'caption': List(Value('string')),
