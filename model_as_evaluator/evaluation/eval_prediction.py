@@ -24,7 +24,7 @@ Functions
 compute_individual_metrics(predictions, labels, metrics, images_names, images)
     Calculate individual evaluation metrics for image captioning predictions.
 
-compute_all_metrics(predictions, labels, images_names, images, text_per_image)
+compute_all_judges(predictions, labels, images_names, images, text_per_image)
     Evaluate and compute various metrics for image captioning predictions, including BERTScore, 
     CLIPScore, ROUGE, BLEU, and METEOR, with both individual and aggregated scores.
 
@@ -40,57 +40,9 @@ import numpy as np
 
 from tqdm import tqdm
 
-from evaluation.metrics import (
-    compute_bert_scores,
-    compute_clip_scores,
-    compute_rouge_scores,
-    compute_meteor_scores,
-    compute_bleu_scores,
-    compute_cider_scores
-)
+from evaluation.judges import compute_llm_as_a_judge
 
-try:
-    from aac_metrics import Evaluate
-except:
-    print(f"AAC metrics is not available, skipping...")
-else:
-    print(f"AAC metrics is available, importing...")
 
-def compute_invidiual_metric(predictions, labels, scorer):
-    result = {}
-
-    # Select the computing metric funtion
-    if "rouge" in scorer.name.lower():
-        compute = compute_rouge_scores
-    elif "meteor" in scorer.name.lower():
-        compute = compute_meteor_scores
-    elif "bleu" in scorer.name.lower():
-        compute = compute_bleu_scores
-    else:
-        compute = None
-
-    # If there is a compute function, score the predictions 
-    if compute:
-        with tqdm(total=len(predictions)) as pbar:
-            pbar.set_description(f"Eval. {scorer.name.upper()}")
-
-            # Create an empty dict with empty lists to add the by-example scores
-            result = {
-                k:[] for k in list(compute([''], [''], scorer).keys())
-            }
-
-            # Compute the score to each example
-            for prediction, label in zip(predictions, labels):
-                individual_result = compute([prediction], [label], scorer)
-
-                # Append the individual scores to the result dict
-                for key in individual_result:
-                    result[key].append(individual_result[key])
-                pbar.update(1)
-    else:
-        print("`scorer` parameter is not set correctly, returning empty metric dict.")
-        
-    return result
 
 
 def compute_individual_metrics(predictions, labels, metrics, images_names, dataset):
@@ -115,26 +67,24 @@ def compute_individual_metrics(predictions, labels, metrics, images_names, datas
     dict
         A dictionary containing individual metric results for each image-caption pair.
     """
-    # BERTScore and CLIPScore compute the metrics for each example by default
-    bertscore_result = compute_bert_scores(predictions, labels, metrics["bertscore"])
-    clipscore_result = compute_clip_scores(predictions, labels, dataset)
+    # # BERTScore and CLIPScore compute the metrics for each example by default
+    # bertscore_result = compute_bert_scores(predictions, labels, metrics["bertscore"])
+    # clipscore_result = compute_clip_scores(predictions, labels, dataset)
+    llm_as_a_judge_score_result = compute_llm_as_a_judge(predictions, labels, prompt)
 
-    # Computing example-by-example results for ROUGE, METEOR and BLEU
-    rouge_result  = compute_invidiual_metric(predictions, labels, metrics["rouge"])
-    meteor_result = compute_invidiual_metric(predictions, labels, metrics["meteor"])
-    bleu_result   = compute_invidiual_metric(predictions, labels, metrics["bleu"])
+
+    # # Computing example-by-example results for ROUGE, METEOR and BLEU
+    # rouge_result  = compute_invidiual_metric(predictions, labels, metrics["rouge"])
+    # meteor_result = compute_invidiual_metric(predictions, labels, metrics["meteor"])
+    # bleu_result   = compute_invidiual_metric(predictions, labels, metrics["bleu"])
 
     return {
         "filename": images_names,
-        **bertscore_result,
-        **clipscore_result,
-        **rouge_result,
-        **meteor_result,
-        **bleu_result
+        **llm_as_a_judge_score_result
     }
 
 
-def compute_all_metrics(predictions, dataset, text_column):
+def compute_all_judges(predictions, dataset, text_column):
     """
     Evaluate and compute various metrics for image captioning predictions, including BERTScore, 
     CLIPScore, ROUGE, BLEU, and METEOR, with both individual and aggregated scores.
@@ -162,21 +112,6 @@ def compute_all_metrics(predictions, dataset, text_column):
 
     evaluate.enable_progress_bar()
 
-    metrics = {
-        "rouge": evaluate.load("rouge"),
-        "bleu": evaluate.load("bleu"),
-        "meteor": evaluate.load("meteor"),
-        "bertscore": evaluate.load("bertscore"),
-    }
-
-    try:
-        metrics["cider"] = Evaluate(metrics=["cider_d"])
-    except:
-        print(f"CIDEr-D metric is not available, skipping...")
-        metrics["cider"] = None
-    else:
-        print(f"CIDEr-D metric is available, importing...")
-
     print("Computing Metrics Individually")
     individual_metrics = compute_individual_metrics(
         predictions, labels, metrics, images_names, dataset
@@ -184,28 +119,14 @@ def compute_all_metrics(predictions, dataset, text_column):
 
     print("Computing Metrics Total")
     original_metrics = {
-        "bertscore_precision": np.mean(individual_metrics["bertscore_precision"]),
-        "bertscore_recall": np.mean(individual_metrics["bertscore_recall"]),
-        "bertscore_f1": np.mean(individual_metrics["bertscore_f1"]),
-        "clipscore": np.mean(individual_metrics["clipscore"]),
-        "ref_clipscore": np.mean(individual_metrics["ref_clipscore"]),
-        **compute_rouge_scores(predictions, labels, metrics["rouge"]),
-        **compute_bleu_scores(predictions, labels, metrics["bleu"]),
-        **compute_meteor_scores(predictions, labels, metrics["meteor"]),
-        **compute_cider_scores(
-            [re.sub(r"\\.", "", s.encode('unicode_escape').decode()) for s in predictions],
-            [[re.sub(r"\\.", "", s.encode('unicode_escape').decode()) for s in label ] for label in labels],
-            metrics["cider"]
-        )
+        "llm_as_a_judge": np.mean(individual_metrics["llm_as_a_judge_score"]),
     }
 
     sample_metrics = {}
 
     print("Computing Metrics Mean/Std")
     for metric in [
-        "bertscore_precision", "bertscore_recall", "bertscore_f1",
-        "clipscore", "ref_clipscore",
-        "rouge1", "rouge2", "rougeL", "rougeLsum", "bleu", "meteor"
+        "llm_as_a_judge_score"
     ]:  
         sample_metrics[f"{metric}_mean"] = round(np.mean(individual_metrics[metric]) * 100, 4)
         sample_metrics[f"{metric}_std"] = round(np.std(individual_metrics[metric]) * 100, 4)
@@ -250,7 +171,7 @@ def evaluate_predictions(
     None
         This function saves evaluation results to CSV files in the specified directories.
     """
-    results = compute_all_metrics(
+    results = compute_all_judges(
         predictions=predictions, 
         dataset=raw_dataset,
         text_column=text_column
