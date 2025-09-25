@@ -57,18 +57,18 @@ else:
     print(f"AAC metrics is available, importing...")
 
 
-def compute_individual_metric(predictions, labels, scorer):
+def compute_individual_metric(predictions, labels, scorer, name):
     result = {}
     repeat = 1
 
     # Select the computing metric funtion
-    if "rouge" in scorer.name.lower():
+    if "rouge" == name:
         compute = compute_rouge_scores
-    elif "meteor" in scorer.name.lower():
+    elif "meteor" == name:
         compute = compute_meteor_scores
-    elif "bleu" in scorer.name.lower():
+    elif "bleu" == name:
         compute = compute_bleu_scores
-    elif "cider" in scorer.name.lower():
+    elif "cider" == name:
         # Works only if the prediction have at least 2 labels to compare
         compute = compute_cider_scores
         repeat = 2
@@ -125,10 +125,10 @@ def compute_individual_metrics(control_group, target_group, metrics, images):
     clipscore_result = compute_clip_scores(target_group, control_group, images)
 
     # Computing example-by-example results for ROUGE, METEOR and BLEU
-    rouge_result  = compute_individual_metric(target_group, control_group, metrics["rouge"])
-    meteor_result = compute_individual_metric(target_group, control_group, metrics["meteor"])
-    bleu_result   = compute_individual_metric(target_group, control_group, metrics["bleu"])
-    cider_result  = compute_individual_metric(target_group, control_group, metrics["cider"])
+    rouge_result  = compute_individual_metric(target_group, control_group, metrics, "rouge")
+    meteor_result = compute_individual_metric(target_group, control_group, metrics, "meteor")
+    bleu_result   = compute_individual_metric(target_group, control_group, metrics, "bleu")
+    cider_result  = compute_individual_metric(target_group, control_group, metrics, "cider")
 
     return {
         **bertscore_result,
