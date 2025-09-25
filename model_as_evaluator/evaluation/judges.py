@@ -73,8 +73,8 @@ def compute_llm_as_a_judge(predictions, labels, config):
             top_p=config["top_p"]
         )
         output_dict = ast.literal_eval(output)
-        outputs["llm_as_a_judge_score"] = ast.literal_eval(output_dict["score"])
-        outputs["llm_as_a_judge_reason"] = ast.literal_eval(output_dict["reason"])
+        outputs["llm_as_a_judge_score"].append(ast.literal_eval(output_dict["score"]))
+        outputs["llm_as_a_judge_reason"].append(ast.literal_eval(output_dict["reason"]))
 
     return outputs
 
@@ -112,8 +112,8 @@ def compute_vlm_as_a_judge(predictions, images, config):
             top_p=config["top_p"]
         )
         output_dict = ast.literal_eval(output)
-        outputs["vlm_as_a_judge_score"] = ast.literal_eval(output_dict["score"])
-        outputs["vlm_as_a_judge_reason"] = ast.literal_eval(output_dict["reason"])
+        outputs["vlm_as_a_judge_score"].append(ast.literal_eval(output_dict["score"]))
+        outputs["vlm_as_a_judge_reason"].append(ast.literal_eval(output_dict["reason"]))
 
     return outputs
 

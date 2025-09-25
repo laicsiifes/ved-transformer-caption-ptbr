@@ -40,12 +40,12 @@ import numpy as np
 
 from tqdm import tqdm
 
-from evaluation.judges import compute_llm_as_a_judge
+from evaluation.judges import compute_llm_as_a_judge, compute_vlm_as_a_judge
 
 
 
 
-def compute_individual_metrics(predictions, labels, metrics, images_names, dataset):
+def compute_individual_metrics(predictions, labels, template, images_names, images):
     """
     Calculate individual evaluation metrics for image captioning predictions.
 
@@ -67,24 +67,19 @@ def compute_individual_metrics(predictions, labels, metrics, images_names, datas
     dict
         A dictionary containing individual metric results for each image-caption pair.
     """
-    # # BERTScore and CLIPScore compute the metrics for each example by default
-    # bertscore_result = compute_bert_scores(predictions, labels, metrics["bertscore"])
-    # clipscore_result = compute_clip_scores(predictions, labels, dataset)
-    llm_as_a_judge_score_result = compute_llm_as_a_judge(predictions, labels, prompt)
-
-
-    # # Computing example-by-example results for ROUGE, METEOR and BLEU
-    # rouge_result  = compute_invidiual_metric(predictions, labels, metrics["rouge"])
-    # meteor_result = compute_invidiual_metric(predictions, labels, metrics["meteor"])
-    # bleu_result   = compute_invidiual_metric(predictions, labels, metrics["bleu"])
+    # LLM and VLM as evaluators compute the metrics for each example by default
+    llm_as_a_judge_score_result = compute_llm_as_a_judge(predictions, labels, template['llm_as_a_judge'])
+    vlm_as_a_judge_score_result = compute_llm_as_a_judge(predictions, images, template['vlm_as_a_judge'])
 
     return {
         "filename": images_names,
-        **llm_as_a_judge_score_result
+        **llm_as_a_judge_score_result,
+        **vlm_as_a_judge_score_result,
+
     }
 
 
-def compute_all_judges(predictions, dataset, text_column):
+def compute_all_judges(predictions, dataset, text_column, image_column, template, config):
     """
     Evaluate and compute various metrics for image captioning predictions, including BERTScore, 
     CLIPScore, ROUGE, BLEU, and METEOR, with both individual and aggregated scores.
@@ -109,12 +104,13 @@ def compute_all_judges(predictions, dataset, text_column):
     """
     images_names = dataset['filename']
     labels = dataset[text_column]
+    images = dataset[image_column]
 
     evaluate.enable_progress_bar()
 
     print("Computing Metrics Individually")
     individual_metrics = compute_individual_metrics(
-        predictions, labels, metrics, images_names, dataset
+        predictions, labels, template, images_names, images
     )
 
     print("Computing Metrics Total")
@@ -142,6 +138,7 @@ def evaluate_predictions(
         raw_dataset,
         predictions,
         text_column,
+        image_column,
         results_dir
     ):
     """
@@ -174,7 +171,8 @@ def evaluate_predictions(
     results = compute_all_judges(
         predictions=predictions, 
         dataset=raw_dataset,
-        text_column=text_column
+        text_column=text_column,
+        image_column=image_column
     )
 
     pd.DataFrame(results["individual_metrics"]).to_csv(

@@ -6,12 +6,6 @@ config:
   # dataset for training and evaluation
   dataset: "both" # "dataset_translated", "dataset_native", "both"
 
-  # size of the samples for correct and incorrect
-  correct_sample_size: 8 # The maximum is 5 (5 captions), sample_size is the number N between 1 and 5, to select N captions among the 5 originals
-  incorrect_sample_size: 32 # The maximum is 4995, the captions that are not part of the 5 ground-truth captions
-  use_control_as_incorrect: True
-  reproducible: False
-
   # percent of CPU cores to use in metrics processing, can be fraction (e.g., "1/2") or not (e.g., "0.5") 
   cpu_cores: "None" # Default "None"
 
@@ -23,7 +17,19 @@ config:
 
 
 ##########################################################
-############## 2. IMAGE CAPTIONING DATASETS ##############
+############### 2. TEMPLATE FOR MODEL JUDGE ##############
+##########################################################
+
+template:
+  # LLM-as-a-Judge template
+  llm_as_evaluator: "clair_template.py"
+
+  # VLM-as-a-Judge template
+  vlm_as_evaluator: "fleur_template.py"
+
+
+##########################################################
+############## 3. IMAGE CAPTIONING DATASETS ##############
 ##########################################################
 
 dataset:

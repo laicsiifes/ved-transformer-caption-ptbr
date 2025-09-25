@@ -107,7 +107,7 @@ def load_datasets(data_dir, step='train', hf_dataset=None):
     return dataset_native, dataset_translated, dataset
 
 
-def select_incorrect_data(row, incorrect_sample_size, incorrect_data, replacement=False, reproducible=True, use_control_for_incorrects=False):
+def select_incorrect_data(row, incorrect_sample_size, incorrect_data, replacement=False, reproducible=True, use_control_as_incorrect=False):
     random_state = int(row['img_id']) if reproducible else None
     current_filename = row['filename']
     incorrect_sample = incorrect_data.loc[~incorrect_data.filename.isin([current_filename])].sample(
@@ -117,7 +117,7 @@ def select_incorrect_data(row, incorrect_sample_size, incorrect_data, replacemen
     )
     row['incorrect_group_filenames'] = incorrect_sample['filename'].values.tolist()
 
-    if use_control_for_incorrects:
+    if use_control_as_incorrect:
         row['incorrect_group'] = incorrect_sample['caption'].values.tolist()
     else:
         row['incorrect_group'] = incorrect_sample['correct_group'].values.tolist()
@@ -137,7 +137,7 @@ def generate_grouped_dataset(
         correct_sample_size,
         incorrect_sample_size,
         reproducible=False,
-        use_control_for_incorrects=False
+        use_control_as_incorrect=False
     ):
     pd.set_option('display.max_columns', None)
     df = join_datasets(dataset_native, dataset_translated, dataset)
@@ -157,7 +157,7 @@ def generate_grouped_dataset(
     print('\t', df[['filename', 'caption', 'control_group', 'correct_group']].head())
     print('\t', df.caption[0], '\n')
 
-    incorrect_data = df.explode(['caption']) if use_control_for_incorrects else df.explode(['correct_group'])
+    incorrect_data = df.explode(['caption']) if use_control_as_incorrect else df.explode(['correct_group'])
     
     print("\nIncorrect group IDs and captions")
     df = df.progress_apply(
@@ -185,70 +185,6 @@ def generate_grouped_dataset(
         'correct_group': List(Value('string')),
         'control_group': List(Value('string')),
         'incorrect_group_filenames': List(Value('string')),
-        'incorrect_group': List(Value('string'))
-    })
-    
-    return Dataset.from_pandas(df, features=features)
-
-
-def generate_grouped_dataset_(dataset, correct_sample_size, incorrect_sample_size, reproducible=False, use_control_for_incorrects=False):
-    df = dataset.to_pandas()
-
-    if reproducible:
-        random.seed(correct_sample_size)
-
-    print("\nCorrect group IDs")
-    df['correct_group_sentids'] = df['sentids'].progress_apply(
-        lambda x: random.sample(x.tolist(), correct_sample_size)
-    )
-
-    print("\nCorrect group captions")
-    df['correct_group'] = df.progress_apply(
-        lambda x: [
-            x['caption'].tolist()[i] for i in range(len(x['caption'])) if i in [int(sentid) % len(x['caption']) for sentid in x['correct_group_sentids']]
-        ],
-        axis=1
-    )
-    print("\nControl group IDs")
-    df['control_group_sentids'] = df.progress_apply(
-        lambda x: [i for i in x['sentids'].tolist() if i not in x['correct_group_sentids']],
-        axis=1
-    )
-
-    print("\nControl group captions")
-    df['control_group'] = df.progress_apply(
-        lambda x: [
-            x['caption'].tolist()[i] for i in range(len(x['caption'])) if i in [int(sentid) % len(x['caption']) for sentid in x['control_group_sentids']]
-        ],
-        axis=1
-    )
-    
-    incorrect_data = df.explode(['caption', 'sentids']) if use_control_for_incorrects else df.explode(['correct_group', 'correct_group_sentids'])
-    
-    print("\nIncorrect group IDs and captions")
-    df = df.progress_apply(
-        lambda row: select_incorrect_data(
-            row=row,
-            incorrect_sample_size=incorrect_sample_size,
-            incorrect_data=incorrect_data,
-            replacement=False
-        ),
-        axis=1
-    )
-    
-    features = Features({
-        'image': Image(mode=None, decode=True),
-        'caption': List(Value('string')),
-        'sentids': List(Value('int32')),
-        'split': Value('string'),
-        'img_id': Value('string'),
-        'filename': Value('string'),
-        'correct_group_sentids': List(Value('int32')),
-        'correct_group': List(Value('string')),
-        'control_group_sentids': List(Value('int32')),
-        'control_group': List(Value('string')),
-        'incorrect_group_filenames': List(Value('string')),
-        'incorrect_group_sentids': List(Value('int32')),
         'incorrect_group': List(Value('string'))
     })
     
