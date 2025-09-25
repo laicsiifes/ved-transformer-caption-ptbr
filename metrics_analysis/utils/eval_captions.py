@@ -57,8 +57,9 @@ else:
     print(f"AAC metrics is available, importing...")
 
 
-def compute_invidiual_metric(predictions, labels, scorer):
+def compute_individual_metric(predictions, labels, scorer):
     result = {}
+    repeat = 1
 
     # Select the computing metric funtion
     if "rouge" in scorer.name.lower():
@@ -67,6 +68,10 @@ def compute_invidiual_metric(predictions, labels, scorer):
         compute = compute_meteor_scores
     elif "bleu" in scorer.name.lower():
         compute = compute_bleu_scores
+    elif "cider" in scorer.name.lower():
+        # Works only if the prediction have at least 2 labels to compare
+        compute = compute_cider_scores
+        repeat = 2
     else:
         compute = None
 
@@ -81,7 +86,7 @@ def compute_invidiual_metric(predictions, labels, scorer):
 
         # Compute the score to each example
         for prediction, label in zip(predictions, labels):
-            individual_result = compute([prediction], [label], scorer)
+            individual_result = compute([prediction]*repeat, [label], scorer)
 
             # Append the individual scores to the result dict
             for key in individual_result:
@@ -120,9 +125,10 @@ def compute_individual_metrics(control_group, target_group, metrics, images):
     clipscore_result = compute_clip_scores(target_group, control_group, images)
 
     # Computing example-by-example results for ROUGE, METEOR and BLEU
-    rouge_result  = compute_invidiual_metric(target_group, control_group, metrics["rouge"])
-    meteor_result = compute_invidiual_metric(target_group, control_group, metrics["meteor"])
-    bleu_result   = compute_invidiual_metric(target_group, control_group, metrics["bleu"])
+    rouge_result  = compute_individual_metric(target_group, control_group, metrics["rouge"])
+    meteor_result = compute_individual_metric(target_group, control_group, metrics["meteor"])
+    bleu_result   = compute_individual_metric(target_group, control_group, metrics["bleu"])
+    cider_result  = compute_individual_metric(target_group, control_group, metrics["cider"])
 
     return {
         **bertscore_result,
