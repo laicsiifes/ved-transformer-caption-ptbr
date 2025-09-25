@@ -81,12 +81,12 @@ def compute_individual_metric(predictions, labels, scorer, name):
         #     pbar.set_description(f"Eval. {scorer.name.upper()}")
         # Create an empty dict with empty lists to add the by-example scores
         result = {
-            k:[] for k in list(compute([''], [''], scorer).keys())
+            k:[] for k in list(compute([''], [''], scorer[name]).keys())
         }
 
         # Compute the score to each example
         for prediction, label in zip(predictions, labels):
-            individual_result = compute([prediction]*repeat, [label], scorer)
+            individual_result = compute([prediction]*repeat, [label], scorer[name])
 
             # Append the individual scores to the result dict
             for key in individual_result:
