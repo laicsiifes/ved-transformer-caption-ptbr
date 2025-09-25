@@ -11,6 +11,7 @@ config:
   incorrect_sample_size: 32 # The maximum is 4995, the captions that are not part of the 5 ground-truth captions
   use_control_as_incorrect: True
   reproducible: False
+  replacement: False
 
   # percent of CPU cores to use in metrics processing, can be fraction (e.g., "1/2") or not (e.g., "0.5") 
   cpu_cores: "None" # Default "None"

@@ -67,7 +67,8 @@ def analyze(config):
         correct_sample_size=config["correct_sample_size"],
         incorrect_sample_size=config["incorrect_sample_size"],
         reproducible=config["reproducible"],
-        use_control_as_incorrect=config["use_control_as_incorrect"]
+        use_control_as_incorrect=config["use_control_as_incorrect"],
+        replacement=config["replacement"]
     )
 
     print('\nDataset')

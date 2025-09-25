@@ -107,7 +107,7 @@ def load_datasets(data_dir, step='train', hf_dataset=None):
     return dataset_native, dataset_translated, dataset
 
 
-def select_incorrect_data(row, incorrect_sample_size, incorrect_data, replacement=False, reproducible=True, use_control_as_incorrect=False):
+def select_incorrect_data(row, incorrect_sample_size, incorrect_data, replacement, reproducible, use_control_as_incorrect):
     random_state = int(row['img_id']) if reproducible else None
     current_filename = row['filename']
     incorrect_sample = incorrect_data.loc[~incorrect_data.filename.isin([current_filename])].sample(
@@ -136,8 +136,9 @@ def generate_grouped_dataset(
         dataset,
         correct_sample_size,
         incorrect_sample_size,
-        reproducible=False,
-        use_control_as_incorrect=False
+        reproducible,
+        use_control_as_incorrect,
+        replacement
     ):
     pd.set_option('display.max_columns', None)
     df = join_datasets(dataset_native, dataset_translated, dataset)
@@ -165,7 +166,9 @@ def generate_grouped_dataset(
             row=row,
             incorrect_sample_size=incorrect_sample_size,
             incorrect_data=incorrect_data,
-            replacement=False
+            replacement=replacement,
+            reproducible=reproducible,
+            use_control_as_incorrect=use_control_as_incorrect
         ),
         axis=1
     )
@@ -174,6 +177,7 @@ def generate_grouped_dataset(
     print('\t', df.info())
     print('\t', df[['filename', 'caption', 'control_group', 'correct_group', 'incorrect_group', 'incorrect_group_filenames']].head())
     print('\t', df.caption[0], '\n')
+    print('\t', df.incorrect_group[0], '\n')
 
     features = Features({
         'image': Image(mode=None, decode=True),
