@@ -4,11 +4,11 @@
 
 config:
   # dataset for training and evaluation
-  dataset: "both" # "dataset_translated", "dataset_native", "both"
+  dataset: "dataset_translated" # "dataset_translated", "dataset_native", "both"
 
   # size of the samples for correct and incorrect
-  correct_sample_size: 8 # The maximum is 5 (5 captions), sample_size is the number N between 1 and 5, to select N captions among the 5 originals
-  incorrect_sample_size: 32 # The maximum is 4995, the captions that are not part of the 5 ground-truth captions
+  correct_sample_size: 4 # The maximum is 5 (5 captions), sample_size is the number N between 1 and 5, to select N captions among the 5 originals
+  incorrect_sample_size: 16 # The maximum is 4995, the captions that are not part of the 5 ground-truth captions
   use_control_as_incorrect: True
   reproducible: False
   replacement: False

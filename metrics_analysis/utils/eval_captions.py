@@ -81,12 +81,12 @@ def compute_individual_metric(predictions, labels, scorer, name):
         #     pbar.set_description(f"Eval. {scorer.name.upper()}")
         # Create an empty dict with empty lists to add the by-example scores
         result = {
-            k:[] for k in list(compute([''], [['']], scorer[name]).keys())
+            k:[] for k in list(compute([''], [''], scorer[name]).keys())
         }
 
         # Compute the score to each example
         for prediction, label in zip(predictions, labels):
-            individual_result = compute([prediction*repeat], [label], scorer[name])
+            individual_result = compute([prediction], [label], scorer[name])
 
             # Append the individual scores to the result dict
             for key in individual_result:
@@ -94,7 +94,7 @@ def compute_individual_metric(predictions, labels, scorer, name):
             # pbar.update(1)
     else:
         print("`scorer` parameter is not set correctly, returning empty metric dict.")
-        
+
     return result
 
 
@@ -142,6 +142,7 @@ def compute_individual_metrics(control_group, target_group, metrics, images):
 
 def compute_metrics_sample(metrics):
     def map_item(item):
+        print(item["correct_group"])
         correct_group_metrics = compute_individual_metrics(
             control_group=[item['control_group']]*len(item['correct_group']),
             target_group=item['correct_group'],
@@ -149,6 +150,7 @@ def compute_metrics_sample(metrics):
             images=[item["image"]]*len(item['correct_group'])
         )
 
+        print(item["incorrect_group"])
         incorrect_group_metrics = compute_individual_metrics(
             control_group=[item['control_group']]*len(item['incorrect_group']),
             target_group=item['incorrect_group'],

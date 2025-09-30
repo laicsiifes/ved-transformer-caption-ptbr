@@ -50,6 +50,7 @@ def join_datasets(ds_native, ds_translated, dataset):
     df = None
     if dataset:
         df = dataset.to_pandas()
+        df['caption'] = df['caption'].apply(lambda x: x.tolist())
     else:
         df_native = ds_native.to_pandas().rename(columns={'caption': 'caption_native'})
         df_translated = ds_translated.to_pandas().rename(columns={'caption': 'caption_translated'})
@@ -103,7 +104,7 @@ def load_datasets(data_dir, step='train', hf_dataset=None):
         dataset_translated = load_dataset(hf_dataset["dataset_translated"])['test']
     else:
         dataset = load_dataset(hf_dataset)['test']
-    
+
     return dataset_native, dataset_translated, dataset
 
 
@@ -111,7 +112,7 @@ def select_incorrect_data(row, incorrect_sample_size, incorrect_data, replacemen
     random_state = int(row['img_id']) if reproducible else None
     current_filename = row['filename']
     incorrect_sample = incorrect_data.loc[~incorrect_data.filename.isin([current_filename])].sample(
-        n=incorrect_sample_size, 
+        n=incorrect_sample_size,
         replace=replacement,
         random_state=random_state
     )
@@ -150,7 +151,7 @@ def generate_grouped_dataset(
 
     if reproducible:
         random.seed(correct_sample_size)
-    
+
     df = df.progress_apply(lambda row: select_correct_data(row=row, correct_sample_size=correct_sample_size), axis=1)
 
     print('\n', 'Correct/Control Columns')
@@ -159,7 +160,7 @@ def generate_grouped_dataset(
     print('\t', df.caption[0], '\n')
 
     incorrect_data = df.explode(['caption']) if use_control_as_incorrect else df.explode(['correct_group'])
-    
+
     print("\nIncorrect group IDs and captions")
     df = df.progress_apply(
         lambda row: select_incorrect_data(
@@ -172,12 +173,14 @@ def generate_grouped_dataset(
         ),
         axis=1
     )
-    
+
     print('\n', 'Incorrect/Correct/Control Columns')
     print('\t', df.info())
     print('\t', df[['filename', 'caption', 'control_group', 'correct_group', 'incorrect_group', 'incorrect_group_filenames']].head())
-    print('\t', df.caption[0], '\n')
-    print('\t', df.incorrect_group[0], '\n')
+    print('\t', df.caption[0])
+    print('\t', df.incorrect_group[0])
+    print('\t', df.isnull().any().sum())
+    print('\t', type(df.control_group[0]), type(df.correct_group[0]), type(df.incorrect_group[0]), '\n')
 
     features = Features({
         'image': Image(mode=None, decode=True),
@@ -191,5 +194,5 @@ def generate_grouped_dataset(
         'incorrect_group_filenames': List(Value('string')),
         'incorrect_group': List(Value('string'))
     })
-    
+
     return Dataset.from_pandas(df, features=features)

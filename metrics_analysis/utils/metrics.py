@@ -91,7 +91,8 @@ def compute_bert_scores(predictions, labels, bertscore):
         predictions=[' '.join(prediction.split()[:200]) for prediction in predictions],
         references=[[' '.join(unit.split()[:200]) for unit in label] for label in labels],
         model_type="neuralmind/bert-base-portuguese-cased",
-        num_layers=12
+        num_layers=12,
+        device="cuda:0"
     )
 
     results["bertscore_precision"] = bertscore_result["precision"]
@@ -109,7 +110,7 @@ def clip_score(
         tokenizer,
         preprocess,
         model,
-        device='cuda',
+        device='cuda:0',
         w=2.5
     ):
     """
@@ -200,7 +201,7 @@ def compute_clip_scores(predictions, labels, images):
     dict
         A dictionary with two keys containing CLIPScore and RefCLIPScore similarity scores.
     """
-    device = "cuda" if torch.cuda.is_available() else "cpu"
+    device = "cuda:0" #  if torch.cuda.is_available() else "cpu"
     model, preprocess = open_clip.create_model_from_pretrained('hf-hub:hiaac-nlp/CAPIVARA')
     model.to(device)
     tokenizer = open_clip.get_tokenizer('hf-hub:hiaac-nlp/CAPIVARA')
