@@ -127,8 +127,12 @@ def select_incorrect_data(row, incorrect_sample_size, incorrect_data, replacemen
 
 
 def select_correct_data(row, correct_sample_size):
-    row['correct_group'] = random.sample(row['caption'], correct_sample_size)
-    row['control_group'] = [cap for cap in row['caption'] if cap not in row['correct_group']]
+    ids = [i for i in range(len(row['caption']))]
+    id_pos = random.sample(ids, correct_sample_size)
+    id_cnt = [idx for idx in ids if idx not in id_pos]
+    
+    row['correct_group'] = row['caption'][id_pos]
+    row['control_group'] = [row['caption'][idx] for idx in id_cnt]
     return row
 
 def generate_grouped_dataset(
