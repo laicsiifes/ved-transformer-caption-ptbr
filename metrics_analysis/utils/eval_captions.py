@@ -142,6 +142,7 @@ def compute_individual_metrics(control_group, target_group, metrics, images):
 
 def compute_metrics_sample(metrics):
     def map_item(item):
+        print(item["filename"])
         print(item["correct_group"])
         correct_group_metrics = compute_individual_metrics(
             control_group=[item['control_group']]*len(item['correct_group']),

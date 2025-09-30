@@ -111,7 +111,7 @@ def load_datasets(data_dir, step='train', hf_dataset=None):
 def select_incorrect_data(row, incorrect_sample_size, incorrect_data, replacement, reproducible, use_control_as_incorrect):
     random_state = int(row['img_id']) if reproducible else None
     current_filename = row['filename']
-    incorrect_sample = incorrect_data.loc[~incorrect_data.filename.isin([current_filename])].sample(
+    incorrect_sample = incorrect_data.loc[incorrect_data['filename'] != current_filename].sample(
         n=incorrect_sample_size,
         replace=replacement,
         random_state=random_state
