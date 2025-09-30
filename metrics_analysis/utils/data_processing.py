@@ -130,8 +130,8 @@ def select_correct_data(row, correct_sample_size):
     ids = [i for i in range(len(row['caption']))]
     id_pos = random.sample(ids, correct_sample_size)
     id_cnt = [idx for idx in ids if idx not in id_pos]
-    
-    row['correct_group'] = row['caption'][id_pos]
+
+    row['correct_group'] = [row['caption'][idx] for idx in id_pos]
     row['control_group'] = [row['caption'][idx] for idx in id_cnt]
     return row
 
