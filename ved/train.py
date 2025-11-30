@@ -161,7 +161,7 @@ if __name__ == "__main__":
     load_dotenv(dotenv_path="../.env")
     login(os.getenv("HF_API_KEY"))
 
-    with open("../config.yml", "r") as file:
+    with open("config.yml", "r") as file:
         setups = config_vars(yaml.safe_load(file))
 
     print("\nConfiguration:", end="\t")

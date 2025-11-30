@@ -1,0 +1,50 @@
+##########################################################
+################### 1. GENERAL CONFIGS ###################
+##########################################################
+
+config:
+  # dataset for training and evaluation
+  dataset: "both" # "dataset_translated", "dataset_native", "both"
+
+  # percent of CPU cores to use in metrics processing, can be fraction (e.g., "1/2") or not (e.g., "0.5") 
+  cpu_cores: "None" # Default "None"
+
+  # dataset from hub
+  dataset_from_hub: True
+
+  # flag to turn off the computer after the training
+  turn_off_computer: False
+
+
+##########################################################
+############### 2. TEMPLATE FOR MODEL JUDGE ##############
+##########################################################
+
+template:
+  # LLM-as-a-Judge template
+  llm_as_evaluator: "clair_template.py"
+
+  # VLM-as-a-Judge template
+  vlm_as_evaluator: "fleur_template.py"
+
+
+##########################################################
+############## 3. IMAGE CAPTIONING DATASETS ##############
+##########################################################
+
+dataset:
+  # Flickr30K randomly sampled with 5k
+  dataset_translated:
+    id: "laicsiifes/flickr30k-pt-br-5k"
+    max_length: 25
+    image_column: "image"
+    text_column: "caption"
+    text_per_image: 5
+
+  # Flickr30K randomly sampled with 5k with the human generated captions of FM30K
+  dataset_native:
+    id: "laicsiifes/flickr30k-pt-br-5k-human-generated"
+    max_length: 25
+    image_column: "image"
+    text_column: "caption"
+    text_per_image: 5

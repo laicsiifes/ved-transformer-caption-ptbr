@@ -1,0 +1,45 @@
+##########################################################
+################### 1. GENERAL CONFIGS ###################
+##########################################################
+
+config:
+  # dataset for training and evaluation
+  dataset: "dataset_translated" # "dataset_translated", "dataset_native", "both"
+
+  # size of the samples for correct and incorrect
+  correct_sample_size: 4 # The maximum is 5 (5 captions), sample_size is the number N between 1 and 5, to select N captions among the 5 originals
+  incorrect_sample_size: 16 # The maximum is 4995, the captions that are not part of the 5 ground-truth captions
+  use_control_as_incorrect: True
+  reproducible: False
+  replacement: False
+
+  # percent of CPU cores to use in metrics processing, can be fraction (e.g., "1/2") or not (e.g., "0.5") 
+  cpu_cores: "None" # Default "None"
+
+  # dataset from hub
+  dataset_from_hub: True
+
+  # flag to turn off the computer after the training
+  turn_off_computer: False
+
+
+##########################################################
+############## 2. IMAGE CAPTIONING DATASETS ##############
+##########################################################
+
+dataset:
+  # Flickr30K randomly sampled with 5k
+  dataset_translated:
+    id: "laicsiifes/flickr30k-pt-br-5k"
+    max_length: 25
+    image_column: "image"
+    text_column: "caption"
+    text_per_image: 5
+
+  # Flickr30K randomly sampled with 5k with the human generated captions of FM30K
+  dataset_native:
+    id: "laicsiifes/flickr30k-pt-br-5k-human-generated"
+    max_length: 25
+    image_column: "image"
+    text_column: "caption"
+    text_per_image: 5
