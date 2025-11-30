@@ -39,6 +39,8 @@ from utils.data_processing import (
 )
 from utils.metrics import evaluate_metrics, generate_results
 from pprint import pprint
+from dotenv import load_dotenv
+from huggingface_hub import login
 
 
 def evaluate_from_model(config, generate_args):
@@ -74,7 +76,12 @@ def evaluate_from_model(config, generate_args):
         max_length=config["max_length"]
     )
 
-    _, _, test_ds = load_datasets(config["data_dir"], step='eval')
+    _, _, test_ds = load_datasets(
+        data_dir=config["test_data_dir"],
+        step='eval',
+        hf_dataset=config["hf_test_set"],
+        dataset_from_hub=config["dataset_from_hub"]
+    )
     _, _, test_dataset = transform_datasets(
         test_ds=test_ds,
         preprocess_fn=preprocess_fn,
@@ -108,6 +115,13 @@ def evaluate_from_predictions(config):
     None
         Writes the evaluation metrics to a CSV file in the specified results directory.
     """
+    _, _, test_ds = load_datasets(
+        data_dir=config["test_data_dir"],
+        step='eval',
+        hf_dataset=config["hf_test_set"],
+        dataset_from_hub=config["dataset_from_hub"]
+    )
+ 
     eval_preds = pd.read_json(os.path.join(config['results_dir'], "predictions.json"))
     
     if "flickr" in config["data_dir"]:
@@ -119,7 +133,8 @@ def evaluate_from_predictions(config):
     results = evaluate_metrics(
         predictions=eval_preds["prediction_text"].values.tolist(),
         labels=eval_preds["label_text"].values.tolist(),
-        images_names=image_names
+        images_names=image_names,
+        dataset=test_ds
     )
 
     pd.DataFrame(results["individual_metrics"]).to_csv(
@@ -143,7 +158,10 @@ if __name__ == "__main__":
     Main function that loads configurations from a YAML file and either evaluates a model directly on a test dataset
     or evaluates based on stored predictions, based on the configuration.
     """
-    with open('../config.yml', 'r') as file:
+    load_dotenv(dotenv_path="../.env")
+    login(os.getenv("HF_API_KEY"))
+
+    with open('config.yml', 'r') as file:
         setups = config_vars(yaml.safe_load(file))
 
     print('\nConfiguration:', end='\t')

@@ -38,6 +38,7 @@ from utils.metrics import compute_metrics, generate_results
 from torch.utils.data import DataLoader
 from pprint import pprint
 from dotenv import load_dotenv
+from huggingface_hub import login
 
 
 def train_model(config, training_args, generate_args, callbacks):
@@ -80,7 +81,11 @@ def train_model(config, training_args, generate_args, callbacks):
         max_length=config["max_length"]
     )
 
-    train_ds, valid_ds, test_ds = load_datasets(config["data_dir"])
+    train_ds, valid_ds, test_ds = load_datasets(
+        data_dir=config["data_dir"],
+        hf_dataset=config["hf_dataset"],
+        dataset_from_hub=config["dataset_from_hub"]
+    )
 
     print('\nDataset')
     print(f'\tTrain: {len(train_ds)}')
@@ -154,8 +159,9 @@ if __name__ == "__main__":
     Main function to run the training process based on configurations specified in a YAML file.
     """
     load_dotenv(dotenv_path="../.env")
+    login(os.getenv("HF_API_KEY"))
 
-    with open("../config.yml", "r") as file:
+    with open("config.yml", "r") as file:
         setups = config_vars(yaml.safe_load(file))
 
     print("\nConfiguration:", end="\t")

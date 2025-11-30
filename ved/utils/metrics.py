@@ -51,12 +51,16 @@ generate_results(dataset, raw_dataset, model, config, collate_fn, tokenizer, gen
 import evaluate
 import os
 import re
+import gc
+import open_clip
+import torch
+
 import pandas as pd
 import numpy as np
 
 from torch.utils.data import DataLoader
 from tqdm import tqdm
-from aac_metrics import Evaluate
+# from aac_metrics import Evaluate
 
 
 def batch_decode_filter(tokens_ids, tokenizer):
@@ -110,6 +114,147 @@ def compute_metrics(eval_pred, tokenizer):
         use_stemmer=False,
         tokenizer=lambda x: x.split()
     )
+
+
+def clip_score(
+        reference,
+        candidate,
+        kind,
+        tokenizer,
+        preprocess,
+        model,
+        device='cuda',
+        w=2.5
+    ):
+    """
+    Compute the CLIP-based similarity score between reference and candidate inputs.
+
+    Parameters
+    ----------
+    reference : PIL.Image.Image or str
+        The reference input, which can be an image (for 'img-txt' kind) or a text string.
+    candidate : str
+        The candidate text to compare with the reference.
+    kind : str
+        Type of comparison, either 'img-txt' for image-to-text or 'txt-txt' for text-to-text.
+    tokenizer : Callable
+        The tokenizer function used to preprocess the text input.
+    preprocess : Callable
+        The preprocessing function for images, used if `kind` is 'img-txt'.
+    model : CLIPModel
+        The CLIP model used to encode images and text.
+    device : str, optional
+        The device ('cuda' or 'cpu') for processing inputs (default is 'cuda').
+    w : float, optional
+        Weight factor for scaling the similarity score (default is 2.5).
+
+    Returns
+    -------
+    float
+        The weighted similarity score between the reference and candidate.
+    """
+    candidate = tokenizer(candidate).to(device)
+
+    if kind == 'img-txt':
+        reference = reference.convert('RGB')
+        reference = preprocess(reference).unsqueeze(0).to(device)
+    else:
+        reference = tokenizer(reference).to(device)
+
+    with torch.no_grad():
+        if kind == 'img-txt':
+            reference_features = model.encode_image(reference)
+            candidate_features = model.encode_text(candidate)
+        else:
+            reference_features = model.encode_text(reference)
+            candidate_features = model.encode_text(candidate)
+
+    reference_features /= reference_features.norm(dim=-1, keepdim=True)
+    candidate_features /= candidate_features.norm(dim=-1, keepdim=True)
+
+    similarity = torch.matmul(reference_features, candidate_features.T)
+    return w * max(similarity.item(), 0)
+
+
+def ref_clip_score(image_score, text_scores):
+    """
+    Calculate the harmonic mean of the image and text CLIP scores.
+
+    Parameters
+    ----------
+    image_score : float
+        The CLIP score for the reference image.
+    text_scores : list of float
+        A list of CLIP scores for the reference text(s).
+
+    Returns
+    -------
+    float
+        The harmonic mean of the image and the highest text score.
+    """
+    text_score = max(text_scores)
+    return 2 * (image_score * text_score) / (image_score + text_score)
+
+
+def compute_clip_scores(predictions, labels, dataset):
+    """
+    Compute CLIP-based similarity scores (CLIPScore and RefCLIPScore) for image-caption pairs.
+
+    Parameters
+    ----------
+    predictions : list of str
+        A list of predicted captions.
+    labels : list of list of str
+        A list of lists, where each sublist contains reference captions for each image.
+    dataset : Dataset
+        A list of images corresponding to each prediction.
+
+    Returns
+    -------
+    dict
+        A dictionary with two keys containing CLIPScore and RefCLIPScore similarity scores.
+    """
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    model, preprocess = open_clip.create_model_from_pretrained('hf-hub:hiaac-nlp/CAPIVARA')
+    model.to(device)
+    tokenizer = open_clip.get_tokenizer('hf-hub:hiaac-nlp/CAPIVARA')
+    
+    scores = {
+        'clipscore': [],
+        'ref_clipscore': []
+    }
+    
+    with tqdm(total=len(predictions)) as pbar:
+        for prediction, label, batch in zip(predictions, labels, dataset):
+            pbar.set_description("Eval. CLIPScore")
+            img_score = clip_score(
+                reference=batch["image"],
+                candidate=prediction,
+                kind='img-txt',
+                tokenizer=tokenizer,
+                preprocess=preprocess,
+                model=model
+            )
+            txt_scores = [
+                clip_score(
+                    reference=reference,
+                    candidate=prediction,
+                    kind='txt-txt',
+                    tokenizer=tokenizer,
+                    preprocess=preprocess,
+                    model=model
+                ) for reference in label
+            ]
+            score = ref_clip_score(img_score, txt_scores)
+            scores['clipscore'].append(img_score)
+            scores['ref_clipscore'].append(score)
+            pbar.update(1)
+
+    del model
+    gc.collect()
+    torch.cuda.empty_cache()
+
+    return scores
 
 
 def no_model_metrics(predictions, labels, metrics):
@@ -208,7 +353,7 @@ def define_no_model_metrics_dict(predictions, labels, metrics):
     return individual_results
 
 
-def calculate_individual_metrics(predictions, labels, metrics, images_names):
+def calculate_individual_metrics(predictions, labels, metrics, images_names, dataset):
     """
     Calculates individual performance metrics for a list of image caption predictions versus the true labels.
     This function computes BERTScore and other non-model based metrics for each image-caption pair,
@@ -238,20 +383,24 @@ def calculate_individual_metrics(predictions, labels, metrics, images_names):
 
     individual_results = define_no_model_metrics_dict(predictions, labels, metrics)
 
+    print("Eval. BERTScore")
     bertscore_result = bertscore.compute(
         predictions=[' '.join(prediction.split()[:200]) for prediction in predictions],
         references=[[' '.join(unit.split()[:200]) for unit in label] for label in labels],
         model_type="neuralmind/bert-base-portuguese-cased",
         num_layers=12
     )
-    
     individual_results["filename"] = images_names
     individual_results["bertscore_precision"] = bertscore_result["precision"]
     individual_results["bertscore_recall"] = bertscore_result["recall"]
     individual_results["bertscore_f1"] = bertscore_result["f1"]
     individual_results["bertscore_hashcode"] = bertscore_result["hashcode"]
 
-    for prediction, label in zip(predictions, labels):
+    clipscore_results = compute_clip_scores(predictions, labels, dataset)
+    individual_results['clipscore'] = clipscore_results['clipscore']
+    individual_results['ref_clipscore'] = clipscore_results['ref_clipscore']
+
+    for prediction, label in tqdm(zip(predictions, labels), desc="Eval. No-Model Metrics"):
         no_model_metrics_results = no_model_metrics([prediction], [label], metrics)
         for k, v in no_model_metrics_results.items():
             individual_results[k].append(v)
@@ -259,7 +408,7 @@ def calculate_individual_metrics(predictions, labels, metrics, images_names):
     return individual_results
 
 
-def evaluate_metrics(predictions, labels, images_names):
+def evaluate_metrics(predictions, labels, images_names, dataset):
     """
     Computes a series of evaluation metrics for a set of image captioning predictions
     compared to ground truth labels.
@@ -292,7 +441,14 @@ def evaluate_metrics(predictions, labels, images_names):
         labels = [labels[i * 5:(i + 1) * 5] for i, _ in enumerate(images_names)]
         predictions = [predictions[i * 5] for i, _ in enumerate(images_names)]
 
-    individual_metrics = calculate_individual_metrics(predictions, labels, metrics, images_names)
+    print('Individual Metrics')
+    individual_metrics = calculate_individual_metrics(
+        predictions,
+        labels,
+        metrics,
+        images_names,
+        dataset
+    )
 
     # metrics["ic_metrics"] = Evaluate(metrics=[
     #     "cider_d",
@@ -300,17 +456,22 @@ def evaluate_metrics(predictions, labels, images_names):
     #     "spider"
     # ])
 
+    print('Total Metrics')
     original_metrics = {
         "bertscore_precision": np.mean(individual_metrics["bertscore_precision"]),
         "bertscore_recall": np.mean(individual_metrics["bertscore_recall"]),
         "bertscore_f1": np.mean(individual_metrics["bertscore_f1"]),
+        "clipscore": np.mean(individual_metrics["clipscore"]),
+        "ref_clipscore": np.mean(individual_metrics["ref_clipscore"]),
         **no_model_metrics(predictions, labels, metrics)
     }
 
     sample_metrics = {}
 
+    print('Mean and Standard Deviation')
     for metric in [
         "bertscore_precision", "bertscore_recall", "bertscore_f1",
+        "clipscore", "ref_clipscore",
         "rouge1", "rouge2", "rougeL", "rougeLsum", "bleu", "meteor"
     ]:
         sample_metrics[f"{metric}_mean"] = round(np.mean(individual_metrics[metric]) * 100, 4)
@@ -408,7 +569,8 @@ def get_evaluation_metrics(
         **evaluate_metrics(
             predictions=predictions, 
             labels=labels,
-            images_names=raw_dataset['filename']
+            images_names=raw_dataset['filename'],
+            dataset=raw_dataset
         )
     }
 
